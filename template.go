@@ -38,7 +38,8 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	})
 
 	return nil, nil
-}`))
+}
+`))
 
 var testTempl = template.Must(template.New("pass_test.go").Parse(`package {{.Pkg}}_test
 
@@ -52,13 +53,15 @@ import (
 func Test(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, {{.Pkg}}.Analyzer, "a")
-}`))
+}
+`))
 
 var adotgoTempl = template.Must(template.New("a.go").Parse(`package a
 
 func main() {
 	// want "pattern"
-}`))
+}
+`))
 
 var cmdMainTempl = template.Must(template.New("main.go").Parse(`package main
 
@@ -67,4 +70,5 @@ import (
 	"golang.org/x/tools/go/analysis/singlechecker"
 )
 
-func main() { singlechecker.Main({{.Pkg}}.Analyzer) }`))
+func main() { singlechecker.Main({{.Pkg}}.Analyzer) }
+`))
