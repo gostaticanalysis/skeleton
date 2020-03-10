@@ -12,16 +12,17 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+const doc = "{{.Pkg}} is ..."
+
+// Analyzer is ...
 var Analyzer = &analysis.Analyzer{
 	Name: "{{.Pkg}}",
-	Doc:  Doc,
+	Doc:  doc,
 	Run:  run,
 	Requires: []*analysis.Analyzer{
 		inspect.Analyzer,
 	},
 }
-
-const Doc = "{{.Pkg}} is ..."
 
 func run(pass *analysis.Pass) (interface{}, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
@@ -33,7 +34,9 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		switch n := n.(type) {
 		case *ast.Ident:
-			_ = n
+			if n.Name == "gopher" {
+				pass.Reportf(n.Pos(), "identifyer is gopher")
+			}
 		}
 	})
 
@@ -50,7 +53,8 @@ import (
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
-func Test(t *testing.T) {
+// TestAnalyzer is a test for Analyzer.
+func TestAnalyzer(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, {{.Pkg}}.Analyzer, "a")
 }
@@ -58,8 +62,10 @@ func Test(t *testing.T) {
 
 var adotgoTempl = template.Must(template.New("a.go").Parse(`package a
 
-func main() {
-	// want "pattern"
+func f() {
+	// The pattern can be written in regular expression.
+	var gopher int // want "pattern"
+	print(gopher)  // want "identifyer is gopher"
 }
 `))
 
