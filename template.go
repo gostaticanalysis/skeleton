@@ -67,8 +67,8 @@ var cmdMainTempl = template.Must(template.New("main.go").Parse(`package main
 
 import (
 	"{{.ImportPath}}"
-	"golang.org/x/tools/go/analysis/singlechecker"
+	"golang.org/x/tools/go/analysis/unitchecker"
 )
 
-func main() { singlechecker.Main({{.Pkg}}.Analyzer) }
+func main() { unitchecker.Main({{.Pkg}}.Analyzer) }
 `))
