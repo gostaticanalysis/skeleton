@@ -15,6 +15,7 @@ import (
 func main() {
 	var s Skeleton
 	flag.BoolVar(&s.Cmd, "cmd", true, "create cmd directory")
+	flag.BoolVar(&s.Plugin, "plugin", true, "create plugin directory")
 	flag.StringVar(&s.ImportPath, "path", "", "import path")
 	flag.Parse()
 	s.ExeName = os.Args[0]
@@ -35,6 +36,7 @@ type Skeleton struct {
 	ExeName    string
 	Args       []string
 	Cmd        bool
+	Plugin bool
 	ImportPath string
 }
 
@@ -107,6 +109,12 @@ func (s *Skeleton) Run() error {
 		}
 	}
 
+	if s.Plugin {
+		if err := s.createPlugin(dir, &info); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -147,6 +155,25 @@ func (s *Skeleton) createCmd(dir string, info *PkgInfo) error {
 	defer cmdMain.Close()
 
 	if err := cmdMainTempl.Execute(cmdMain, info); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Skeleton) createPlugin(dir string, info *PkgInfo) error {
+	pluginDir := filepath.Join(dir, "plugin", info.Pkg)
+	if err := os.MkdirAll(pluginDir, 0777); err != nil {
+		return err
+	}
+
+	pluginMain, err := os.Create(filepath.Join(pluginDir, "main.go"))
+	if err != nil {
+		return err
+	}
+	defer pluginMain.Close()
+
+	if err := pluginMainTempl.Execute(pluginMain, info); err != nil {
 		return err
 	}
 

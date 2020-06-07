@@ -25,6 +25,9 @@ pkgname
 ├── cmd
 │   └── pkgname
 │       └── main.go
+├── plugin
+│   └── pkgname
+│       └── main.go
 ├── pkgname.go
 ├── pkgname_test.go
 └── testdata
@@ -38,6 +41,12 @@ pkgname
 ```
 $ skeleton -path="github.com/gostaticanalysis/pkgname"
 pkgname
+├── cmd
+│   └── pkgname
+│       └── main.go
+├── plugin
+│   └── pkgname
+│       └── main.go
 ├── pkgname.go
 ├── pkgname_test.go
 └── testdata
@@ -51,10 +60,39 @@ pkgname
 ```
 $ skeleton -cmd=false pkgname
 pkgname
+├── plugin
+│   └── pkgname
+│       └── main.go
 ├── pkgname.go
 ├── pkgname_test.go
 └── testdata
     └── src
         └── a
             └── a.go
+```
+
+### Create skeleton codes without plugin directory
+
+```
+$ skeleton -cmd=false pkgname
+pkgname
+├── cmd
+│   └── pkgname
+│       └── main.go
+├── pkgname.go
+├── pkgname_test.go
+└── testdata
+    └── src
+        └── a
+            └── a.go
+```
+
+## Build as a plugin for golangci-lint
+
+`skeleton` generates plugin directory which has main.go.
+The main.go can be built as a plugin for [golangci-lint](https://golangci-lint.run/contributing/new-linters/#how-to-add-a-private-linter-to-golangci-lint).
+
+```
+$ skeleton pkgname
+$ go build -buildmode=plugin -o path_to_plugin_dir importpath
 ```
