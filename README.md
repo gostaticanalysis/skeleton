@@ -74,7 +74,7 @@ pkgname
 ### Create skeleton codes without plugin directory
 
 ```
-$ skeleton -cmd=false pkgname
+$ skeleton -plugin=false pkgname
 pkgname
 ├── cmd
 │   └── pkgname
