@@ -86,9 +86,16 @@ var pluginMainTempl = template.Must(template.New("main.go").Parse(`// This file 
 package main
 
 import (
+	"strings"
+
 	"{{.ImportPath}}"
 	"golang.org/x/tools/go/analysis"
 )
+
+// flags for Analyzer.Flag.
+// If you would like to specify flags for your plugin, you can put them via `ldflags` as below.
+//     $ go build -buildmode=plugin -ldflags "-X 'main.flags=-opt val'" {{.ImportPath}}/plugin/{{.Pkg}
+var flags string
 
 // AnalyzerPlugin provides analyzers as a plugin.
 // It follows golangci-lint style plugin.
@@ -96,6 +103,12 @@ var AnalyzerPlugin analyzerPlugin
 
 type analyzerPlugin struct{}
 func (analyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
+	if flags != "" {
+		flagset := {{.Pkg}}.Analyzer.Flags
+		if err := flagset.Parse(strings.Split(flags, " ")); err != nil {
+			panic("cannot parse flags of {{.Pkg}}: "+err.Error())
+		}
+	}
 	return []*analysis.Analyzer{
 		{{.Pkg}}.Analyzer,
 	}
