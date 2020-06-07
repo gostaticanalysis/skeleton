@@ -96,3 +96,10 @@ The main.go can be built as a plugin for [golangci-lint](https://golangci-lint.r
 $ skeleton pkgname
 $ go build -buildmode=plugin -o path_to_plugin_dir importpath
 ```
+
+If you would like to specify flags for your plugin, you can put them via `ldflags` as below.
+
+```
+$ skeleton pkgname
+$ go build -buildmode=plugin -ldflags "-X 'main.flags=-funcs log.Fatal'" -o path_to_plugin_dir github.com/gostaticanalysis/called/plugin/called
+```
