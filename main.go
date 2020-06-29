@@ -36,7 +36,7 @@ type Skeleton struct {
 	ExeName    string
 	Args       []string
 	Cmd        bool
-	Plugin bool
+	Plugin     bool
 	ImportPath string
 }
 

@@ -102,11 +102,12 @@ var flags string
 var AnalyzerPlugin analyzerPlugin
 
 type analyzerPlugin struct{}
+
 func (analyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
 	if flags != "" {
 		flagset := {{.Pkg}}.Analyzer.Flags
 		if err := flagset.Parse(strings.Split(flags, " ")); err != nil {
-			panic("cannot parse flags of {{.Pkg}}: "+err.Error())
+			panic("cannot parse flags of {{.Pkg}}: " + err.Error())
 		}
 	}
 	return []*analysis.Analyzer{
