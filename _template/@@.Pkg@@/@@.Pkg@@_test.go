@@ -1,15 +1,15 @@
-package {{.Pkg}}_test
+package @@.Pkg@@_test
 
 import (
 	"testing"
 
-	"{{.ImportPath}}"
+	"@@.ImportPath@@"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
 // TestAnalyzer is a test for Analyzer.
 func TestAnalyzer(t *testing.T) {
 	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, {{.Pkg}}.Analyzer, "a")
+	analysistest.Run(t, testdata, @@.Pkg@@.Analyzer, "a")
 }
 
