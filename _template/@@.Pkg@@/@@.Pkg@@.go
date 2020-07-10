@@ -1,4 +1,4 @@
-package {{.Pkg}}
+package @@.Pkg@@
 
 import (
 	"go/ast"
@@ -8,11 +8,11 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-const doc = "{{.Pkg}} is ..."
+const doc = "@@.Pkg@@ is ..."
 
 // Analyzer is ...
 var Analyzer = &analysis.Analyzer{
-	Name: "{{.Pkg}}",
+	Name: "@@.Pkg@@",
 	Doc:  doc,
 	Run:  run,
 	Requires: []*analysis.Analyzer{
