@@ -55,6 +55,24 @@ pkgname
             └── a.go
 ```
 
+### Overwrite existing directory
+
+If you want to overwrite without confirmation, you can run with `-overwrite` option.
+
+```
+$ skeleton -overwrite pkgname
+```
+
+If you run skeleton without `-overwrite` option, skeleton show optoins.
+```
+$ skeleton pkgname
+pkgname already exist, remove?
+[1] No(Exit)
+[2] Remove and create new directory
+[3] Overwrite existing files with confirmation
+[4] Create new files only
+```
+
 ### Create skeleton codes without cmd directory
 
 ```

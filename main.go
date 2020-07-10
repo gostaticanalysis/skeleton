@@ -129,11 +129,11 @@ func (s *Skeleton) importPath(cwd string, pkg string) string {
 }
 
 func (s *Skeleton) selectMode(dir string) bool {
-	fmt.Printf("%s is already exist, remove?\n", dir)
+	fmt.Printf("%s already exist, remove?\n", dir)
 	fmt.Println("[1] No(Exit)")
 	fmt.Println("[2] Remove and create new directory")
-	fmt.Println("[3] Overwrite exist files with confirmation")
-	fmt.Println("[4] Create new file only")
+	fmt.Println("[3] Overwrite existing files with confirmation")
+	fmt.Println("[4] Create new files only")
 	fmt.Print("(default is 1) >")
 	var m string
 	fmt.Scanln(&m)
@@ -189,7 +189,7 @@ func (s *Skeleton) createFile(f txtar.File) (rerr error) {
 	if exist {
 		switch s.Mode {
 		case ModeConfirm:
-			fmt.Printf("%s is already exit, replace? [y/N] >", path)
+			fmt.Printf("%s already exit, replace? [y/N] >", path)
 			var yn string
 			fmt.Scanln(&yn)
 			switch strings.ToLower(yn) {
