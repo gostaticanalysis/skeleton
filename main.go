@@ -1,19 +1,25 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"go/build"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
+	"golang.org/x/tools/txtar"
 )
+
+//go:generate go run tools/txtar/main.go -strip "_template/" _template template.go
 
 func main() {
 	var s Skeleton
+	flag.BoolVar(&s.OverWrite, "overwrite", false, "overwrite all file")
 	flag.BoolVar(&s.Cmd, "cmd", true, "create cmd directory")
 	flag.BoolVar(&s.Plugin, "plugin", true, "create plugin directory")
 	flag.StringVar(&s.ImportPath, "path", "", "import path")
@@ -27,31 +33,46 @@ func main() {
 	}
 }
 
-type PkgInfo struct {
-	Pkg        string
-	ImportPath string
-}
-
 type Skeleton struct {
 	ExeName    string
 	Args       []string
+	OverWrite  bool
 	Cmd        bool
 	Plugin     bool
 	ImportPath string
+	Mode       Mode
+}
+
+type Mode int
+
+const (
+	ModeRemoveAndCreateNew Mode = iota
+	ModeConfirm
+	ModeCreateNewFile
+)
+
+type TemplateData struct {
+	Pkg        string
+	ImportPath string
+	Cmd        bool
+	Plugin     bool
 }
 
 func (s *Skeleton) Run() error {
 
-	var info PkgInfo
+	td := &TemplateData{
+		Cmd:    s.Cmd,
+		Plugin: s.Plugin,
+	}
 
 	if len(s.Args) < 1 {
 		if s.ImportPath != "" {
-			info.Pkg = path.Base(s.ImportPath)
+			td.Pkg = path.Base(s.ImportPath)
 		} else {
 			return errors.New("package must be specified")
 		}
 	} else {
-		info.Pkg = s.Args[0]
+		td.Pkg = s.Args[0]
 	}
 
 	cwd, err := os.Getwd()
@@ -59,66 +80,31 @@ func (s *Skeleton) Run() error {
 		return err
 	}
 
-	info.ImportPath = s.importPath(cwd, &info)
+	td.ImportPath = s.importPath(cwd, td.Pkg)
 
-	if info.ImportPath == "" {
+	if td.ImportPath == "" {
 		const format = "%s must be executed in GOPATH or -path option must be specified"
-		return errors.Errorf(format, s.ExeName)
+		return fmt.Errorf(format, s.ExeName)
 	}
 
-	dir := filepath.Join(cwd, info.Pkg)
-	if err := os.Mkdir(dir, 0777); err != nil {
-		return err
-	}
-
-	src, err := os.Create(filepath.Join(dir, info.Pkg+".go"))
+	exist, err := isExist(td.Pkg)
 	if err != nil {
 		return err
 	}
-	defer src.Close()
-	if err := srcTempl.Execute(src, info); err != nil {
-		return err
-	}
-
-	test, err := os.Create(filepath.Join(dir, info.Pkg+"_test.go"))
-	if err != nil {
-		return err
-	}
-	defer test.Close()
-	if err := testTempl.Execute(test, info); err != nil {
-		return err
-	}
-
-	testdata := filepath.Join(dir, "testdata", "src", "a")
-	if err := os.MkdirAll(testdata, 0777); err != nil {
-		return err
-	}
-
-	adotgo, err := os.Create(filepath.Join(testdata, "a.go"))
-	if err != nil {
-		return err
-	}
-	defer adotgo.Close()
-	if err := adotgoTempl.Execute(adotgo, info); err != nil {
-		return err
-	}
-
-	if s.Cmd {
-		if err := s.createCmd(dir, &info); err != nil {
-			return err
+	if exist && !s.OverWrite {
+		if exit := s.selectMode(td.Pkg); exit {
+			return nil
 		}
 	}
 
-	if s.Plugin {
-		if err := s.createPlugin(dir, &info); err != nil {
-			return err
-		}
+	if err := s.createAll(td); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (s *Skeleton) importPath(cwd string, info *PkgInfo) string {
+func (s *Skeleton) importPath(cwd string, pkg string) string {
 
 	if s.ImportPath != "" {
 		return s.ImportPath
@@ -135,47 +121,125 @@ func (s *Skeleton) importPath(cwd string, info *PkgInfo) string {
 			if err != nil {
 				return ""
 			}
-			return path.Join(filepath.ToSlash(rel), info.Pkg)
+			return path.Join(filepath.ToSlash(rel), pkg)
 		}
 	}
 
 	return ""
 }
 
-func (s *Skeleton) createCmd(dir string, info *PkgInfo) error {
-	cmdDir := filepath.Join(dir, "cmd", info.Pkg)
-	if err := os.MkdirAll(cmdDir, 0777); err != nil {
+func (s *Skeleton) selectMode(dir string) bool {
+	fmt.Printf("%s is already exist, remove?\n", dir)
+	fmt.Println("[1] No(Exit)")
+	fmt.Println("[2] Remove and create new directory")
+	fmt.Println("[3] Overwrite exist files with confirmation")
+	fmt.Println("[4] Create new file only")
+	fmt.Print("(default is 1) >")
+	var m string
+	fmt.Scanln(&m)
+	switch m {
+	case "2":
+		s.Mode = ModeRemoveAndCreateNew
+	case "3":
+		s.Mode = ModeConfirm
+	case "4":
+		s.Mode = ModeCreateNewFile
+	default:
+		// exit
+		return true
+	}
+	return false
+}
+
+func (s *Skeleton) createAll(td *TemplateData) error {
+
+	if s.Mode == ModeRemoveAndCreateNew {
+		if err := os.RemoveAll(td.Pkg); err != nil {
+			return err
+		}
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, td); err != nil {
 		return err
 	}
 
-	cmdMain, err := os.Create(filepath.Join(cmdDir, "main.go"))
-	if err != nil {
-		return err
-	}
-	defer cmdMain.Close()
-
-	if err := cmdMainTempl.Execute(cmdMain, info); err != nil {
-		return err
+	ar := txtar.Parse(buf.Bytes())
+	for _, f := range ar.Files {
+		if err := s.createFile(f); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (s *Skeleton) createPlugin(dir string, info *PkgInfo) error {
-	pluginDir := filepath.Join(dir, "plugin", info.Pkg)
-	if err := os.MkdirAll(pluginDir, 0777); err != nil {
-		return err
+func (s *Skeleton) createFile(f txtar.File) (rerr error) {
+	if len(bytes.TrimSpace(f.Data)) == 0 {
+		return nil
 	}
 
-	pluginMain, err := os.Create(filepath.Join(pluginDir, "main.go"))
+	path := filepath.FromSlash(f.Name)
+
+	exist, err := isExist(path)
 	if err != nil {
 		return err
 	}
-	defer pluginMain.Close()
 
-	if err := pluginMainTempl.Execute(pluginMain, info); err != nil {
+	if exist {
+		switch s.Mode {
+		case ModeConfirm:
+			fmt.Printf("%s is already exit, replace? [y/N] >", path)
+			var yn string
+			fmt.Scanln(&yn)
+			switch strings.ToLower(yn) {
+			case "y", "yes":
+				// continue
+			default:
+				// skip
+				fmt.Println("skip", path)
+				return nil
+			}
+		case ModeCreateNewFile:
+			// skip
+			fmt.Println("skip", path)
+			return nil
+		}
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0777); err != nil {
 		return err
 	}
 
+	w, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := w.Close(); err != nil && rerr == nil {
+			rerr = err
+		}
+	}()
+
+	r := bytes.NewReader(f.Data)
+	if _, err := io.Copy(w, r); err != nil {
+		return err
+	}
+
+	fmt.Println("create", path)
+
 	return nil
+}
+
+func isExist(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	return false, err
 }
