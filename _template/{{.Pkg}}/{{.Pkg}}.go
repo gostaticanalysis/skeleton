@@ -31,7 +31,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		switch n := n.(type) {
 		case *ast.Ident:
 			if n.Name == "gopher" {
-				pass.Reportf(n.Pos(), "identifyer is gopher")
+				pass.Reportf(n.Pos(), "identifier is gopher")
 			}
 		}
 	})
