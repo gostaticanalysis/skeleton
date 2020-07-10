@@ -57,7 +57,7 @@ func main() {
 
 		p := filepath.ToSlash(path)
 		ar.Files = append(ar.Files, txtar.File{
-			Name: strings.TrimLeft(p, *flagStripPrefix),
+			Name: strings.TrimPrefix(p, *flagStripPrefix),
 			Data: data,
 		})
 
