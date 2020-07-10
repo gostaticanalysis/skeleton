@@ -21,11 +21,19 @@ func main() {
 	var s Skeleton
 	flag.BoolVar(&s.OverWrite, "overwrite", false, "overwrite all file")
 	flag.BoolVar(&s.Cmd, "cmd", true, "create cmd directory")
+	flag.StringVar(&s.Checker, "checker", "unit", "checker which is used in main.go (unit,single,multi)")
 	flag.BoolVar(&s.Plugin, "plugin", true, "create plugin directory")
 	flag.StringVar(&s.ImportPath, "path", "", "import path")
 	flag.Parse()
 	s.ExeName = os.Args[0]
 	s.Args = flag.Args()
+
+	switch s.Checker {
+	case "unit", "single", "multi":
+		// noop
+	default:
+		s.Checker = "unit"
+	}
 
 	if err := s.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
@@ -38,6 +46,7 @@ type Skeleton struct {
 	Args       []string
 	OverWrite  bool
 	Cmd        bool
+	Checker    string
 	Plugin     bool
 	ImportPath string
 	Mode       Mode
@@ -56,13 +65,15 @@ type TemplateData struct {
 	ImportPath string
 	Cmd        bool
 	Plugin     bool
+	Checker    string
 }
 
 func (s *Skeleton) Run() error {
 
 	td := &TemplateData{
-		Cmd:    s.Cmd,
-		Plugin: s.Plugin,
+		Cmd:     s.Cmd,
+		Plugin:  s.Plugin,
+		Checker: s.Checker,
 	}
 
 	if len(s.Args) < 1 {
