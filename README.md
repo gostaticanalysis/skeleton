@@ -95,7 +95,7 @@ You can change the checker from unitchecker to singlechecker or multichecker.
 
 ```
 $ skeleton -checker=single pkgname
-$ cat cmd/pkgname/main.go                                                                    [~/Desktop/hogera]
+$ cat cmd/pkgname/main.go
 package main
 
 import (
