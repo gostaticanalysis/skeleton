@@ -44,11 +44,12 @@ func main() {
 type Skeleton struct {
 	ExeName    string
 	Args       []string
+	Dir        string
+	ImportPath string
 	OverWrite  bool
 	Cmd        bool
 	Checker    string
 	Plugin     bool
-	ImportPath string
 	Mode       Mode
 }
 
@@ -78,11 +79,13 @@ func (s *Skeleton) Run() error {
 
 	if len(s.Args) < 1 {
 		if s.ImportPath != "" {
+			s.Dir = s.ImportPath
 			td.Pkg = path.Base(s.ImportPath)
 		} else {
 			return errors.New("package must be specified")
 		}
 	} else {
+		s.Dir = s.Args[0]
 		td.Pkg = path.Base(s.Args[0])
 	}
 
@@ -91,19 +94,19 @@ func (s *Skeleton) Run() error {
 		return err
 	}
 
-	td.ImportPath = s.importPath(cwd, td.Pkg)
+	td.ImportPath = s.importPath(cwd)
 
 	if td.ImportPath == "" {
 		const format = "%s must be executed in GOPATH or -path option must be specified"
 		return fmt.Errorf(format, s.ExeName)
 	}
 
-	exist, err := isExist(td.Pkg)
+	exist, err := isExist(s.Dir)
 	if err != nil {
 		return err
 	}
 	if exist && !s.OverWrite {
-		if exit := s.selectMode(td.Pkg); exit {
+		if exit := s.selectMode(s.Dir); exit {
 			return nil
 		}
 	}
@@ -115,7 +118,7 @@ func (s *Skeleton) Run() error {
 	return nil
 }
 
-func (s *Skeleton) importPath(cwd string, pkg string) string {
+func (s *Skeleton) importPath(cwd string) string {
 
 	if s.ImportPath != "" {
 		return s.ImportPath
@@ -132,7 +135,7 @@ func (s *Skeleton) importPath(cwd string, pkg string) string {
 			if err != nil {
 				return ""
 			}
-			return path.Join(filepath.ToSlash(rel), pkg)
+			return path.Join(filepath.ToSlash(rel), filepath.ToSlash(s.Dir))
 		}
 	}
 
@@ -165,7 +168,7 @@ func (s *Skeleton) selectMode(dir string) bool {
 func (s *Skeleton) createAll(td *TemplateData) error {
 
 	if s.Mode == ModeRemoveAndCreateNew {
-		if err := os.RemoveAll(td.Pkg); err != nil {
+		if err := os.RemoveAll(s.Dir); err != nil {
 			return err
 		}
 	}
@@ -190,7 +193,7 @@ func (s *Skeleton) createFile(f txtar.File) (rerr error) {
 		return nil
 	}
 
-	path := filepath.FromSlash(f.Name)
+	path := filepath.Join(s.Dir, filepath.FromSlash(f.Name))
 
 	exist, err := isExist(path)
 	if err != nil {
