@@ -83,7 +83,7 @@ func (s *Skeleton) Run() error {
 			return errors.New("package must be specified")
 		}
 	} else {
-		td.Pkg = s.Args[0]
+		td.Pkg = path.Base(s.Args[0])
 	}
 
 	cwd, err := os.Getwd()
