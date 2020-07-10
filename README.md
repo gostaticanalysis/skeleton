@@ -89,6 +89,23 @@ pkgname
             └── a.go
 ```
 
+### Change the checker from unitchecker to singlechecker or multichecker
+
+You can change the checker from unitchecker to singlechecker or multichecker.
+
+```
+$ skeleton -checker=single pkgname
+$ cat cmd/pkgname/main.go                                                                    [~/Desktop/hogera]
+package main
+
+import (
+		"pkgname"
+		"golang.org/x/tools/go/analysis/singlechecker"
+)
+
+func main() { singlechecker.Main(pkgname.Analyzer) }
+```
+
 ### Create skeleton codes without plugin directory
 
 ```
