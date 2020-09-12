@@ -6,10 +6,12 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
+	"go/format"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"golang.org/x/tools/txtar"
@@ -23,6 +25,8 @@ func main() {
 	flag.BoolVar(&s.Cmd, "cmd", true, "create cmd directory")
 	flag.StringVar(&s.Checker, "checker", "unit", "checker which is used in main.go (unit,single,multi)")
 	flag.BoolVar(&s.Plugin, "plugin", true, "create plugin directory")
+	flag.StringVar(&s.Type, "type", "inspect", "type of skeleton code (inspect|ssa)")
+	flag.BoolVar(&s.Mod, "mod", true, "generate empty go.mod")
 	flag.StringVar(&s.ImportPath, "path", "", "import path")
 	flag.Parse()
 	s.ExeName = os.Args[0]
@@ -51,6 +55,8 @@ type Skeleton struct {
 	Checker    string
 	Plugin     bool
 	Mode       Mode
+	Type       string
+	Mod        bool
 }
 
 type Mode int
@@ -67,6 +73,9 @@ type TemplateData struct {
 	Cmd        bool
 	Plugin     bool
 	Checker    string
+	Type       string
+	Mod        bool
+	GoVer      string
 }
 
 func (s *Skeleton) Run() error {
@@ -75,6 +84,9 @@ func (s *Skeleton) Run() error {
 		Cmd:     s.Cmd,
 		Plugin:  s.Plugin,
 		Checker: s.Checker,
+		Type:    s.Type,
+		Mod:     s.Mod,
+		GoVer:   runtime.Version()[2:],
 	}
 
 	if len(s.Args) < 1 {
@@ -87,6 +99,12 @@ func (s *Skeleton) Run() error {
 	} else {
 		s.Dir = s.Args[0]
 		td.Pkg = path.Base(s.Args[0])
+	}
+
+	switch s.Type {
+	case "inspect", "ssa":
+	default:
+		return fmt.Errorf("unexpected type: %s")
 	}
 
 	cwd, err := os.Getwd()
@@ -235,7 +253,16 @@ func (s *Skeleton) createFile(f txtar.File) (rerr error) {
 		}
 	}()
 
-	r := bytes.NewReader(f.Data)
+	// format a go file
+	data := f.Data
+	if filepath.Ext(path) == ".go" {
+		data, err = format.Source(data)
+		if err != nil {
+			return err
+		}
+	}
+
+	r := bytes.NewReader(data)
 	if _, err := io.Copy(w, r); err != nil {
 		return err
 	}
