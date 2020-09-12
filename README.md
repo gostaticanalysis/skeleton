@@ -25,15 +25,16 @@ pkgname
 ├── cmd
 │   └── pkgname
 │       └── main.go
-├── plugin
-│   └── pkgname
-│       └── main.go
+├── go.mod
 ├── pkgname.go
 ├── pkgname_test.go
+├── plugin
+│   └── main.go
 └── testdata
     └── src
         └── a
-            └── a.go
+            ├── a.go
+            └── go.mod
 ```
 
 ### Create skeleton codes with import path
@@ -44,15 +45,16 @@ pkgname
 ├── cmd
 │   └── pkgname
 │       └── main.go
-├── plugin
-│   └── pkgname
-│       └── main.go
+├── go.mod
 ├── pkgname.go
 ├── pkgname_test.go
+├── plugin
+│   └── main.go
 └── testdata
     └── src
         └── a
-            └── a.go
+            ├── a.go
+            └── go.mod
 ```
 
 ### Overwrite existing directory
@@ -78,16 +80,37 @@ pkgname already exist, remove?
 ```
 $ skeleton -cmd=false pkgname
 pkgname
+├── go.mod
+├── pkgname.go
+├── pkgname_test.go
 ├── plugin
+│   └── main.go
+└── testdata
+    └── src
+        └── a
+            ├── a.go
+            └── go.mod
+```
+
+### Create skeleton codes without go.mod
+
+```
+$ skeleton -mod=false pkgname
+pkgname
+├── cmd
 │   └── pkgname
 │       └── main.go
 ├── pkgname.go
 ├── pkgname_test.go
+├── plugin
+│   └── main.go
 └── testdata
     └── src
         └── a
-            └── a.go
+            ├── a.go
+            └── go.mod
 ```
+
 
 ### Change the checker from unitchecker to singlechecker or multichecker
 
@@ -114,13 +137,22 @@ pkgname
 ├── cmd
 │   └── pkgname
 │       └── main.go
+├── go.mod
 ├── pkgname.go
 ├── pkgname_test.go
 └── testdata
     └── src
         └── a
-            └── a.go
+            ├── a.go
+            └── go.mod
 ```
+
+### Change type of skeleton code
+
+skeleton accepts `-type` option which indicates type of skeleton code.
+
+* `-type=inspect`(default): generate skeleton code with `inspect.Analyzer`
+* `-type=ssa`: generate skeleton code with `buildssa.Analyzer`
 
 ## Build as a plugin for golangci-lint
 
