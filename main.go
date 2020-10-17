@@ -80,13 +80,17 @@ type TemplateData struct {
 
 func (s *Skeleton) Run() error {
 
+	// go1.xx.yy -> 1.xx
+	// go1.xx    -> 1.xx
+	gover := strings.Join(strings.Split(runtime.Version(), ".")[:2], ".")[2:]
+
 	td := &TemplateData{
 		Cmd:     s.Cmd,
 		Plugin:  s.Plugin,
 		Checker: s.Checker,
 		Type:    s.Type,
 		Mod:     s.Mod,
-		GoVer:   runtime.Version()[2:],
+		GoVer:   gover,
 	}
 
 	if len(s.Args) < 1 {
@@ -104,7 +108,7 @@ func (s *Skeleton) Run() error {
 	switch s.Type {
 	case "inspect", "ssa":
 	default:
-		return fmt.Errorf("unexpected type: %s")
+		return fmt.Errorf("unexpected type: %s", s.Type)
 	}
 
 	cwd, err := os.Getwd()
