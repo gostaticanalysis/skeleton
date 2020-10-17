@@ -25,7 +25,7 @@ func main() {
 	flag.BoolVar(&s.Cmd, "cmd", true, "create cmd directory")
 	flag.StringVar(&s.Checker, "checker", "unit", "checker which is used in main.go (unit,single,multi)")
 	flag.BoolVar(&s.Plugin, "plugin", true, "create plugin directory")
-	flag.StringVar(&s.Type, "type", "inspect", "type of skeleton code (inspect|ssa)")
+	flag.StringVar(&s.Type, "type", "inspect", "type of skeleton code (inspect|ssa|codegen)")
 	flag.BoolVar(&s.Mod, "mod", true, "generate empty go.mod")
 	flag.StringVar(&s.ImportPath, "path", "", "import path")
 	flag.Parse()
@@ -37,6 +37,13 @@ func main() {
 		// noop
 	default:
 		s.Checker = "unit"
+	}
+
+	if s.Type == "codegen" {
+		if s.Checker != "single" {
+			s.Checker = "single"
+		}
+		s.Plugin = false
 	}
 
 	if err := s.Run(); err != nil {
@@ -106,7 +113,7 @@ func (s *Skeleton) Run() error {
 	}
 
 	switch s.Type {
-	case "inspect", "ssa":
+	case "inspect", "ssa", "codegen":
 	default:
 		return fmt.Errorf("unexpected type: %s", s.Type)
 	}
