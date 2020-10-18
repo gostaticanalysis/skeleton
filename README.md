@@ -147,12 +147,31 @@ pkgname
             └── go.mod
 ```
 
+### Create skeleton codes of codegenerator
+
+```
+$ skeleton -type=codegen pkgname
+pkgname
+├── cmd
+│   └── pkgname
+│       └── main.go
+├── go.mod
+├── pkgname.go
+├── pkgname_test.go
+└── testdata
+    └── src
+        └── a
+            ├── a.go
+            └── pkgname.golden
+```
+
 ### Change type of skeleton code
 
 skeleton accepts `-type` option which indicates type of skeleton code.
 
 * `-type=inspect`(default): generate skeleton code with `inspect.Analyzer`
 * `-type=ssa`: generate skeleton code with `buildssa.Analyzer`
+* `-type=codegen`: generate skeleton code of a code generator
 
 ## Build as a plugin for golangci-lint
 
