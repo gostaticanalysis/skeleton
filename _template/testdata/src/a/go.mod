@@ -1,3 +1,5 @@
+@@ if ne .Type "codegen" -@@
 module a
 
-go 1.15
+go @@.GoVer@@
+@@ end -@@
