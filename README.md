@@ -9,10 +9,18 @@ skeleton creates skeleton codes for a modularized static analysis tool with [x/t
 If you want to create new analyzer, you should provide a package variable which type is `*analysis.Analyzer`.
 `skeleton` creates skeleton codes of the package and directories including test codes and main.go.
 
-## Insall
+## Install
+
+### Go version < 1.16
 
 ```
 $ go get -u github.com/gostaticanalysis/skeleton
+```
+
+### Go 1.16+
+
+```
+$ go install github.com/gostaticanalysis/skeleton@latest
 ```
 
 ## How to use
