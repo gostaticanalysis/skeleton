@@ -1,4 +1,4 @@
-@@ if .Plugin -@@
+@@ if not .OmmitPlugin -@@
 // This file can build as a plugin for golangci-lint by below command.
 //    go build -buildmode=plugin -o path_to_plugin_dir @@.ImportPath@@/plugin/@@.Pkg@@
 // See: https://golangci-lint.run/contributing/new-linters/#how-to-add-a-private-linter-to-golangci-lint

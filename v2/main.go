@@ -46,16 +46,15 @@ func parseFlag(info *skeleton.Info) {
 		flag.PrintDefaults()
 	}
 	flag.Var(&info.Checker, "checker", "[unit,single,multi]")	
+	if info.Checker == "" {
+		info.Checker = skeleton.CheckerUnit
+	}
 	flag.Var(&info.Kind, "kind", "[inspect,ssa,codegen]")
 	if info.Kind == "" {
 		info.Kind = skeleton.KindInspect
 	}
-	flag.BoolVar(&info.Cmd, "cmd", false, "create main file")
-	if info.Checker != "" {
-		info.Checker = skeleton.CheckerUnit
-		info.Cmd = true
-	}
-	flag.BoolVar(&info.Plugin, "plugin", false, "create golangci-lint plugin")
+	flag.BoolVar(&info.Cmd, "cmd", true, "create main file")
+	flag.BoolVar(&info.OmmitPlugin, "plugin", false, "create golangci-lint plugin")
 	flag.StringVar(&info.Pkg, "pkg", "", "package name")
 	flag.Parse()
 }
