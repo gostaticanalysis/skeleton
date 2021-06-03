@@ -14,13 +14,13 @@ If you want to create new analyzer, you should provide a package variable which 
 ### Go version < 1.16
 
 ```
-$ go install github.com/gostaticanalysis/skeleton/v2@latest
+$ go get -u github.com/gostaticanalysis/skeleton/v2
 ```
 
 ### Go 1.16+
 
 ```
-$ go install github.com/gostaticanalysis/skeleton@latest
+$ go install github.com/gostaticanalysis/skeleton/v2@latest
 ```
 
 ## How to use
