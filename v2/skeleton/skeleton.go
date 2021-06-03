@@ -3,9 +3,7 @@ package skeleton
 import (
 	"bytes"
 	"context"
-	"io"
 	"io/fs"
-	"os"
 	"text/template"
 
 	"github.com/josharian/txtarfs"
@@ -13,8 +11,7 @@ import (
 )
 
 type Generator struct {
-	Stdout, Stderr io.Writer
-	Template       *template.Template
+	Template *template.Template
 }
 
 func (g *Generator) Run(ctx context.Context, info *Info) (fs.FS, error) {
@@ -30,18 +27,4 @@ func (g *Generator) template() *template.Template {
 		return g.Template
 	}
 	return DefaultTemplate
-}
-
-func (g *Generator) stdout() io.Writer {
-	if g.Stdout != nil {
-		return g.Stdout
-	}
-	return os.Stdout
-}
-
-func (g *Generator) stderr() io.Writer {
-	if g.Stderr != nil {
-		return g.Stderr
-	}
-	return os.Stderr
 }
