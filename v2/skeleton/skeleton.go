@@ -1,16 +1,31 @@
 package skeleton
 
 import (
+	"bytes"
+	"context"
 	"io"
+	"io/fs"
 	"os"
+	"text/template"
+
+	"github.com/josharian/txtarfs"
+	"golang.org/x/tools/txtar"
 )
 
-type Generator struct {	
+type Generator struct {
 	Stdout, Stderr io.Writer
-	Template       *text.Template
+	Template       *template.Template
 }
 
-func (g *Generator) template() *text.Template {
+func (g *Generator) Run(ctx context.Context, info *Info) (fs.FS, error) {
+	var buf bytes.Buffer
+	if err := g.template().Execute(&buf, info); err != nil {
+		return nil, err
+	}
+	return txtarfs.As(txtar.Parse(buf.Bytes())), nil
+}
+
+func (g *Generator) template() *template.Template {
 	if g.Template != nil {
 		return g.Template
 	}
@@ -29,8 +44,4 @@ func (g *Generator) stderr() io.Writer {
 		return g.Stderr
 	}
 	return os.Stderr
-}
-
-func (g *Generator) Run(ctx context.Context, info *Info) (fs.Fs, error) {
-	var buf bytes.Buffer
 }

@@ -4,7 +4,7 @@ package @@.Pkg@@_test
 import (
 	"testing"
 
-	"@@.ImportPath@@"
+	"@@.Path@@"
 	"github.com/gostaticanalysis/testutil"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
@@ -23,7 +23,7 @@ import (
 	"os"
 	"testing"
 
-	"@@.ImportPath@@"
+	"@@.Path@@"
 	"github.com/gostaticanalysis/codegen/codegentest"
 )
 

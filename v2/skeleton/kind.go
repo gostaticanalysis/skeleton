@@ -1,20 +1,39 @@
-package cmd
+package skeleton
 
-type Kind int
+import "flag"
+
+// Kind represents kind of skeleton codes.
+// Kind implements flag.Value.
+type Kind string
+
+var _ flag.Value = (*Kind)(nil)
 
 const (
-	KindInspect Kind = iota
-	KindSSA
-	KindCodegen
+	KindInspect Kind = "inspect"
+	KindSSA     Kind = "ssa"
+	KindCodegen Kind = "codegen"
 )
 
-func ParseKind(s string) Kind {
+func (k Kind) String() string {
+	switch k {
+	case KindSSA:
+		return "ssa"
+	case KindCodegen:
+		return "codegen"
+	default:
+		return "inspect"
+	}
+}
+
+// "ssa" -> KindSSA, "codegen" -> KindCodegen otherwise KindInspect.
+func (k *Kind) Set(s string) error {
 	switch s {
 	case "ssa":
-		return KindSSA
+		*k = KindSSA
 	case "codegen":
-		return KindCodegen
+		*k = KindCodegen
 	default:
-		return KindInspect
+		*k = KindInspect
 	}
+	return nil
 }

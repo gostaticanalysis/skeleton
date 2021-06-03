@@ -1,19 +1,18 @@
 package skeleton
 
-import "fmt"
+import "flag"
 
-type Checker int
+type Checker string
 
 const (
-	CheckerUnit Checker = iota
-	CheckerSingle
-	CheckerMulti
+	CheckerUnit   Checker = "unit"
+	CheckerSingle Checker = "single"
+	CheckerMulti  Checker = "multi"
 )
 
-var _ fmt.Stringer = CheckerUnit
+var _ flag.Value = (*Checker)(nil)
 
-// String implements fmt.Stringer.
-// It will return "single", "multi" or "unit".
+// String returns "single", "multi" or "unit".
 func (ch Checker) String() string {
 	switch ch {
 	case CheckerSingle:
@@ -23,4 +22,16 @@ func (ch Checker) String() string {
 	default:
 		return "unit"
 	}
+}
+
+func (ch *Checker) Set(s string) error {
+	switch s {
+	case "single":
+		*ch = CheckerSingle
+	case "multi":
+		*ch = CheckerMulti
+	default:
+		*ch = CheckerUnit
+	}
+	return nil
 }

@@ -3,7 +3,7 @@
 package main
 
 import (
-	"@@.ImportPath@@"
+	"@@.Path@@"
 	"golang.org/x/tools/go/analysis/@@.Checker@@checker"
 )
 
@@ -13,7 +13,7 @@ func main() { @@.Checker@@checker.Main(@@.Pkg@@.Analyzer) }
 package main
 
 import (
-	"@@.ImportPath@@"
+	"@@.Path@@"
 	"github.com/gostaticanalysis/codegen/@@.Checker@@generator"
 )
 

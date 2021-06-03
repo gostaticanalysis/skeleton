@@ -1,6 +1,7 @@
 package skeleton
 
 import (
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -50,7 +51,7 @@ func CreateDir(root string, fsys fs.FS) error {
 	})
 
 	if err != nil {
-		return fmt.Erorrf("CreateDir: %w", err)
+		return fmt.Errorf("CreateDir: %w", err)
 	}
 	return nil
 }

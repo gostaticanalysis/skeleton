@@ -12,15 +12,15 @@ If you want to create new analyzer, you should provide a package variable which 
 ## Insall
 
 ```
-$ go get -u github.com/gostaticanalysis/skeleton
+$ go install github.com/gostaticanalysis/skeleton/v2@latest
 ```
 
 ## How to use
 
-### Create skeleton codes in GOPATH
+### Create skeleton codes with module path
 
 ```
-$ skeleton pkgname
+$ skeleton example.com/pkgname
 pkgname
 ├── cmd
 │   └── pkgname
@@ -28,28 +28,6 @@ pkgname
 ├── go.mod
 ├── pkgname.go
 ├── pkgname_test.go
-├── plugin
-│   └── main.go
-└── testdata
-    └── src
-        └── a
-            ├── a.go
-            └── go.mod
-```
-
-### Create skeleton codes with import path
-
-```
-$ skeleton -path="github.com/gostaticanalysis/pkgname"
-pkgname
-├── cmd
-│   └── pkgname
-│       └── main.go
-├── go.mod
-├── pkgname.go
-├── pkgname_test.go
-├── plugin
-│   └── main.go
 └── testdata
     └── src
         └── a
@@ -62,12 +40,12 @@ pkgname
 If you want to overwrite without confirmation, you can run with `-overwrite` option.
 
 ```
-$ skeleton -overwrite pkgname
+$ skeleton -overwrite example.com/pkgname
 ```
 
 If you run skeleton without `-overwrite` option, skeleton show optoins.
 ```
-$ skeleton pkgname
+$ skeleton example.com/pkgname
 pkgname already exist, remove?
 [1] No(Exit)
 [2] Remove and create new directory
@@ -78,46 +56,24 @@ pkgname already exist, remove?
 ### Create skeleton codes without cmd directory
 
 ```
-$ skeleton -cmd=false pkgname
+$ skeleton -cmd=false example.com/pkgname
 pkgname
 ├── go.mod
 ├── pkgname.go
 ├── pkgname_test.go
-├── plugin
-│   └── main.go
 └── testdata
     └── src
         └── a
             ├── a.go
             └── go.mod
 ```
-
-### Create skeleton codes without go.mod
-
-```
-$ skeleton -mod=false pkgname
-pkgname
-├── cmd
-│   └── pkgname
-│       └── main.go
-├── pkgname.go
-├── pkgname_test.go
-├── plugin
-│   └── main.go
-└── testdata
-    └── src
-        └── a
-            ├── a.go
-            └── go.mod
-```
-
 
 ### Change the checker from unitchecker to singlechecker or multichecker
 
 You can change the checker from unitchecker to singlechecker or multichecker.
 
 ```
-$ skeleton -checker=single pkgname
+$ skeleton -checker=single example.com/pkgname
 $ cat cmd/pkgname/main.go
 package main
 
@@ -129,10 +85,10 @@ import (
 func main() { singlechecker.Main(pkgname.Analyzer) }
 ```
 
-### Create skeleton codes without plugin directory
+### Create skeleton codes with plugin directory
 
 ```
-$ skeleton -plugin=false pkgname
+$ skeleton -plugin example.com/pkgname
 pkgname
 ├── cmd
 │   └── pkgname
@@ -140,6 +96,8 @@ pkgname
 ├── go.mod
 ├── pkgname.go
 ├── pkgname_test.go
+├── plugin
+│   └── main.go
 └── testdata
     └── src
         └── a
@@ -150,7 +108,7 @@ pkgname
 ### Create skeleton codes of codegenerator
 
 ```
-$ skeleton -type=codegen pkgname
+$ skeleton -type=codegen example.com/pkgname
 pkgname
 ├── cmd
 │   └── pkgname
@@ -167,11 +125,11 @@ pkgname
 
 ### Change type of skeleton code
 
-skeleton accepts `-type` option which indicates type of skeleton code.
+skeleton accepts `-kind` option which indicates kind of skeleton code.
 
-* `-type=inspect`(default): generate skeleton code with `inspect.Analyzer`
-* `-type=ssa`: generate skeleton code with `buildssa.Analyzer`
-* `-type=codegen`: generate skeleton code of a code generator
+* `-kind=inspect`(default): generate skeleton code with `inspect.Analyzer`
+* `-kind=ssa`: generate skeleton code with `buildssa.Analyzer`
+* `-kind=codegen`: generate skeleton code of a code generator
 
 ## Build as a plugin for golangci-lint
 
@@ -179,13 +137,13 @@ skeleton accepts `-type` option which indicates type of skeleton code.
 The main.go can be built as a plugin for [golangci-lint](https://golangci-lint.run/contributing/new-linters/#how-to-add-a-private-linter-to-golangci-lint).
 
 ```
-$ skeleton pkgname
-$ go build -buildmode=plugin -o path_to_plugin_dir importpath
+$ skeleton -plugin example.com/pkgname
+$ go build -buildmode=plugin -o path_to_plugin_dir example.com/pkgname/plugin/pkgname
 ```
 
 If you would like to specify flags for your plugin, you can put them via `ldflags` as below.
 
 ```
-$ skeleton pkgname
-$ go build -buildmode=plugin -ldflags "-X 'main.flags=-funcs log.Fatal'" -o path_to_plugin_dir github.com/gostaticanalysis/called/plugin/called
+$ skeleton -plugin example.com/pkgname
+$ go build -buildmode=plugin -ldflags "-X 'main.flags=-funcs log.Fatal'" -o path_to_plugin_dir example.com/pkgname/plugin/pkgname
 ```
