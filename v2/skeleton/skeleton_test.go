@@ -32,15 +32,18 @@ func TestSkeletonRun(t *testing.T) {
 		input   string
 
 		wantExitCode int
+		wantOutput   string
 	}{
-		"nooption":              {"", "example.com/example", "", skeleton.ExitSuccess},
-		"overwrite-cancel":      {"-- example/go.mod --\n// empty", "example.com/example", "1\n", skeleton.ExitSuccess},
-		"overwrite-force":       {"-- example/go.mod --\n// empty", "example.com/example", "2\n", skeleton.ExitSuccess},
-		"overwrite-confirm-yes": {"-- example/go.mod --\n// empty", "example.com/example", "3\ny\n", skeleton.ExitSuccess},
-		"overwrite-confirm-no":  {"-- example/go.mod --\n// empty", "example.com/example", "3\nn\n", skeleton.ExitSuccess},
-		"overwrite-newonly":     {"-- example/go.mod --\n// empty", "example.com/example", "4\n", skeleton.ExitSuccess},
-		"plugin":                {"", "-plugin example.com/example", "", skeleton.ExitSuccess},
-		"nocmd":                 {"", "-cmd=false example.com/example", "", skeleton.ExitSuccess},
+		"nooption":              {"", "example.com/example", "", skeleton.ExitSuccess, ""},
+		"overwrite-cancel":      {"-- example/go.mod --\n// empty", "example.com/example", "1\n", skeleton.ExitSuccess, ""},
+		"overwrite-force":       {"-- example/go.mod --\n// empty", "example.com/example", "2\n", skeleton.ExitSuccess, ""},
+		"overwrite-confirm-yes": {"-- example/go.mod --\n// empty", "example.com/example", "3\ny\n", skeleton.ExitSuccess, ""},
+		"overwrite-confirm-no":  {"-- example/go.mod --\n// empty", "example.com/example", "3\nn\n", skeleton.ExitSuccess, ""},
+		"overwrite-newonly":     {"-- example/go.mod --\n// empty", "example.com/example", "4\n", skeleton.ExitSuccess, ""},
+		"plugin":                {"", "-plugin example.com/example", "", skeleton.ExitSuccess, ""},
+		"nocmd":                 {"", "-cmd=false example.com/example", "", skeleton.ExitSuccess, ""},
+		"onlypkgname":           {"", "example", "", skeleton.ExitSuccess, ""},
+		"version":               {"", "-v", "", skeleton.ExitSuccess, "skeleton version\n"},
 	}
 
 	if flagUpdate {
@@ -70,6 +73,10 @@ func TestSkeletonRun(t *testing.T) {
 
 			if gotExitCode != tt.wantExitCode {
 				t.Errorf("exit code want %d got %d", tt.wantExitCode, gotExitCode)
+			}
+
+			if tt.wantOutput != "" && out.String() != tt.wantOutput {
+				t.Errorf("output want %s got %s", tt.wantOutput, out.String())
 			}
 
 			got := txtarDir(t, s.Dir)

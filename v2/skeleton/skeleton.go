@@ -40,17 +40,18 @@ func (s *Skeleton) Run(version string, args []string) int {
 	}
 
 	var info Info
-	args, err := s.parseFlag(args, &info)
+	flags, err := s.parseFlag(args, &info)
 	if err != nil {
 		fmt.Fprintln(s.ErrOutput, "Error:", err)
 		return ExitError
 	}
 
-	if len(args) <= 0 || module.CheckPath(args[0]) != nil {
-		flag.Usage()
+	info.Path = flags.Arg(0)
+	// allow package name only
+	if module.CheckImportPath(info.Path) != nil {
+		flags.Usage()
 		return ExitError
 	}
-	info.Path = args[0]
 
 	if info.Pkg == "" {
 		info.Pkg = path.Base(info.Path)
@@ -64,7 +65,7 @@ func (s *Skeleton) Run(version string, args []string) int {
 	return ExitSuccess
 }
 
-func (s *Skeleton) parseFlag(args []string, info *Info) ([]string, error) {
+func (s *Skeleton) parseFlag(args []string, info *Info) (*flag.FlagSet, error) {
 	flags := flag.NewFlagSet("skeleton", flag.ContinueOnError)
 	flags.SetOutput(s.ErrOutput)
 	flags.Usage = func() {
@@ -87,7 +88,7 @@ func (s *Skeleton) parseFlag(args []string, info *Info) ([]string, error) {
 		return nil, err
 	}
 
-	return flags.Args(), nil
+	return flags, nil
 }
 
 func (s *Skeleton) run(info *Info) error {
