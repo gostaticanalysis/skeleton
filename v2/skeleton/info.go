@@ -6,5 +6,5 @@ type Info struct {
 	Pkg         string
 	Path        string
 	Cmd         bool
-	OmmitPlugin bool
+	Plugin bool
 }

@@ -54,7 +54,7 @@ func parseFlag(info *skeleton.Info) {
 		info.Kind = skeleton.KindInspect
 	}
 	flag.BoolVar(&info.Cmd, "cmd", true, "create main file")
-	flag.BoolVar(&info.OmmitPlugin, "plugin", false, "create golangci-lint plugin")
+	flag.BoolVar(&info.Plugin, "plugin", false, "create golangci-lint plugin")
 	flag.StringVar(&info.Pkg, "pkg", "", "package name")
 	flag.Parse()
 }
@@ -64,7 +64,8 @@ func run(info *skeleton.Info) error {
 	if err != nil {
 		return err
 	}
-	if err := skeleton.CreateDir(info.Pkg, fsys); err != nil {
+
+	if err := skeleton.CreateDir(skeleton.DefaultPrompt, info.Pkg, fsys); err != nil {
 		return err
 	}
 	return nil
