@@ -130,12 +130,13 @@ func create(prompt *Prompt, path string, policy overwritePolicy) (io.WriteCloser
 		io.Closer
 	}{io.Discard, io.NopCloser(nil)}
 
-	f, err := os.Create(path)
-	switch {
-	case err == nil:
-		return f, nil
-	case !os.IsExist(err):
+	exist, err := isExist(path)
+	if err != nil {
 		return nil, err
+	}	
+
+	if !exist {
+		return os.Create(path)
 	}
 
 	if policy != confirm {
@@ -152,14 +153,5 @@ func create(prompt *Prompt, path string, policy overwritePolicy) (io.WriteCloser
 		return nopWriter, nil
 	}
 
-	if err := os.Remove(path); err != nil {
-		return nil, err
-	}
-
-	f, err = os.Create(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
+	return os.Create(path)
 }

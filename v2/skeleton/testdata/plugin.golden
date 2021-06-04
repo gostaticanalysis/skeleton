@@ -1,0 +1,121 @@
+-- example/cmd/example/main.go --
+package main
+
+import (
+	"example.com/example"
+	"golang.org/x/tools/go/analysis/unitchecker"
+)
+
+func main() { unitchecker.Main(example.Analyzer) }
+
+-- example/example.go --
+package example
+
+import (
+	"go/ast"
+
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
+)
+
+const doc = "example is ..."
+
+// Analyzer is ...
+var Analyzer = &analysis.Analyzer{
+	Name: "example",
+	Doc:  doc,
+	Run:  run,
+	Requires: []*analysis.Analyzer{
+		inspect.Analyzer,
+	},
+}
+
+func run(pass *analysis.Pass) (interface{}, error) {
+	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	nodeFilter := []ast.Node{
+		(*ast.Ident)(nil),
+	}
+
+	inspect.Preorder(nodeFilter, func(n ast.Node) {
+		switch n := n.(type) {
+		case *ast.Ident:
+			if n.Name == "gopher" {
+				pass.Reportf(n.Pos(), "identifier is gopher")
+			}
+		}
+	})
+
+	return nil, nil
+}
+-- example/example_test.go --
+package example_test
+
+import (
+	"testing"
+
+	"example.com/example"
+	"github.com/gostaticanalysis/testutil"
+	"golang.org/x/tools/go/analysis/analysistest"
+)
+
+// TestAnalyzer is a test for Analyzer.
+func TestAnalyzer(t *testing.T) {
+	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
+	analysistest.Run(t, testdata, example.Analyzer, "a")
+}
+-- example/go.mod --
+module example.com/example
+
+go 1.16
+
+-- example/plugin/main.go --
+// This file can build as a plugin for golangci-lint by below command.
+//    go build -buildmode=plugin -o path_to_plugin_dir example.com/example/plugin/example
+// See: https://golangci-lint.run/contributing/new-linters/#how-to-add-a-private-linter-to-golangci-lint
+
+package main
+
+import (
+	"strings"
+
+	"example.com/example"
+	"golang.org/x/tools/go/analysis"
+)
+
+// flags for Analyzer.Flag.
+// If you would like to specify flags for your plugin, you can put them via 'ldflags' as below.
+//     $ go build -buildmode=plugin -ldflags "-X 'main.flags=-opt val'" example.com/example/plugin/example
+var flags string
+
+// AnalyzerPlugin provides analyzers as a plugin.
+// It follows golangci-lint style plugin.
+var AnalyzerPlugin analyzerPlugin
+
+type analyzerPlugin struct{}
+
+func (analyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
+	if flags != "" {
+		flagset := example.Analyzer.Flags
+		if err := flagset.Parse(strings.Split(flags, " ")); err != nil {
+			panic("cannot parse flags of example: " + err.Error())
+		}
+	}
+	return []*analysis.Analyzer{
+		example.Analyzer,
+	}
+}
+-- example/testdata/src/a/a.go --
+package a
+
+func f() {
+	// The pattern can be written in regular expression.
+	var gopher int // want "pattern"
+	print(gopher)  // want "identifier is gopher"
+}
+-- example/testdata/src/a/go.mod --
+module a
+
+go 1.16
+
