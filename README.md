@@ -2,7 +2,7 @@
 
 skeleton creates skeleton codes for a modularized static analysis tool with [x/tools/go/analysis](https://golang.org/x/tools/go/analysis) package.
 
-## x/tools/go/analysis pacakge
+## x/tools/go/analysis package
 
 [x/tools/go/analysis](https://golang.org/x/tools/go/analysis) package provides a type `analysis.Analyzer` which is unit of analyzers in modularized static analysis tool.
 

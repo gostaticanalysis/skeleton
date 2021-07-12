@@ -133,7 +133,7 @@ func create(prompt *Prompt, path string, policy overwritePolicy) (io.WriteCloser
 	exist, err := isExist(path)
 	if err != nil {
 		return nil, err
-	}	
+	}
 
 	if !exist {
 		return os.Create(path)
