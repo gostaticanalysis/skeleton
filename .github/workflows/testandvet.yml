@@ -42,7 +42,7 @@ jobs:
 
     - name: Install tennvet
       run: |
-        GOBIN=$(pwd) go install github.com/tenntenn/tennvet@latest
+        GOBIN=$(pwd)/v2 go install github.com/tenntenn/tennvet@latest
 
     - name: Test and vet
       run: |
