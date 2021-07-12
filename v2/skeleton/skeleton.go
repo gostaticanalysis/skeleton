@@ -73,19 +73,28 @@ func (s *Skeleton) parseFlag(args []string, info *Info) (*flag.FlagSet, error) {
 		flags.PrintDefaults()
 	}
 	flags.Var(&info.Checker, "checker", "[unit,single,multi]")
-	if info.Checker == "" {
-		info.Checker = CheckerUnit
-	}
+
 	flags.Var(&info.Kind, "kind", "[inspect,ssa,codegen]")
-	if info.Kind == "" {
-		info.Kind = KindInspect
-	}
+
 	flags.BoolVar(&info.Cmd, "cmd", true, "create main file")
 	flags.BoolVar(&info.Plugin, "plugin", false, "create golangci-lint plugin")
 	flags.StringVar(&info.Pkg, "pkg", "", "package name")
 
 	if err := flags.Parse(args); err != nil {
 		return nil, err
+	}
+
+	if info.Kind == "" {
+		info.Kind = KindInspect
+	}
+
+	if info.Checker == "" {
+		switch info.Kind {
+		case KindCodegen:
+			info.Checker = CheckerSingle
+		default:
+			info.Checker = CheckerUnit
+		}
 	}
 
 	return flags, nil
