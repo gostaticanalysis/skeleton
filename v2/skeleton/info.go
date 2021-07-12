@@ -1,10 +1,10 @@
 package skeleton
 
 type Info struct {
-	Kind        Kind
-	Checker     Checker
-	Pkg         string
-	Path        string
-	Cmd         bool
-	Plugin bool
+	Kind    Kind
+	Checker Checker
+	Pkg     string
+	Path    string
+	Cmd     bool
+	Plugin  bool
 }

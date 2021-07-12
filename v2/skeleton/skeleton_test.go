@@ -75,6 +75,10 @@ func TestSkeletonRun(t *testing.T) {
 				t.Errorf("exit code want %d got %d", tt.wantExitCode, gotExitCode)
 			}
 
+			if tt.wantExitCode == 0 && errout.String() != "" {
+				t.Error("exit code want 0 but error messages are outputed", errout.String())
+			}
+
 			if tt.wantOutput != "" && out.String() != tt.wantOutput {
 				t.Errorf("output want %s got %s", tt.wantOutput, out.String())
 			}
