@@ -3,11 +3,11 @@ package main
 
 import (
 	"example"
+
 	"golang.org/x/tools/go/analysis/unitchecker"
 )
 
 func main() { unitchecker.Main(example.Analyzer) }
-
 -- example/example.go --
 package example
 
@@ -56,6 +56,7 @@ import (
 	"testing"
 
 	"example"
+
 	"github.com/gostaticanalysis/testutil"
 	"golang.org/x/tools/go/analysis/analysistest"
 )

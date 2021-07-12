@@ -22,10 +22,12 @@ func (g *Generator) Run(info *Info) (fs.FS, error) {
 	}
 	ar := txtar.Parse(buf.Bytes())
 	for i := range ar.Files {
-		if filepath.Ext(ar.Files[i].Name) != ".go" || len(ar.Files[i].Data) == 0 {
+		if filepath.Ext(ar.Files[i].Name) != ".go" ||
+			len(bytes.TrimSpace(ar.Files[i].Data)) == 0 {
 			continue
 		}
 		opt := &imports.Options{
+			Comments:   true,
 			FormatOnly: true,
 		}
 		src, err := imports.Process(ar.Files[i].Name, ar.Files[i].Data, opt)

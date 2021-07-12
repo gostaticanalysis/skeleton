@@ -7,7 +7,6 @@ import (
 )
 
 func main() { unitchecker.Main(example.Analyzer) }
-
 -- example/example.go --
 package example
 
