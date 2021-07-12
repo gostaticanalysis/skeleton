@@ -47,6 +47,9 @@ func (s *Skeleton) Run(version string, args []string) int {
 	}
 
 	info.Path = flags.Arg(0)
+	if prefix := os.Getenv("SKELETON_PREFIX"); prefix != "" {
+		info.Path = path.Join(prefix, info.Path)
+	}
 	// allow package name only
 	if module.CheckImportPath(info.Path) != nil {
 		flags.Usage()
