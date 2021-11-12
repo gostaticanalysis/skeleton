@@ -60,7 +60,7 @@ func TestAnalyzer(t *testing.T) {
 -- example/go.mod --
 module example.com/example
 
-go 1.16
+go 1.17
 
 -- example/testdata/src/a/a.go --
 package a
@@ -73,5 +73,5 @@ func f() {
 -- example/testdata/src/a/go.mod --
 module a
 
-go 1.16
+go 1.17
 
