@@ -34,6 +34,7 @@ func modinit(path string) (string, error) {
 
 func goVersion() (string, error) {
 	tags := build.Default.ReleaseTags
+	fmt.Println(tags)
 	for i := len(tags) - 1; i >= 0; i-- {
 		version := tags[i]
 		if strings.HasPrefix(version, "go") && modfile.GoVersionRE.MatchString(version[2:]) {
