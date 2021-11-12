@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/gostaticanalysis/skeletonkit"
 	"golang.org/x/mod/module"
 )
 
@@ -116,7 +117,7 @@ func (s *Skeleton) run(info *Info) error {
 	}
 
 	dst := filepath.Join(s.Dir, info.Pkg)
-	if err := CreateDir(prompt, dst, fsys); err != nil {
+	if err := skeletonkit.CreateDir(prompt, dst, fsys); err != nil {
 		return err
 	}
 	return nil

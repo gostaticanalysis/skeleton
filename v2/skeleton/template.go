@@ -2,11 +2,9 @@ package skeleton
 
 import (
 	"embed"
-	"io/fs"
 	"text/template"
 
-	"github.com/josharian/txtarfs"
-	"golang.org/x/tools/txtar"
+	"github.com/gostaticanalysis/skeletonkit"
 )
 
 //go:embed _template/*
@@ -16,28 +14,9 @@ var tmplFS embed.FS
 var DefaultTemplate *template.Template
 
 // DefaultFuncMap is default FuncMap for a template.
-var DefaultFuncMap = template.FuncMap{
-	"gomod": func() string {
-		return "go.mod"
-	},
-	"gomodinit": func(path string) string {
-		f, err := modinit(path)
-		if err != nil {
-			panic(err)
-		}
-		return f
-	},
-}
+// Deprecated: should use skeletonkit.TemplateWithFuncs
+var DefaultFuncMap = skeletonkit.DefaultFuncMap
 
 func init() {
-	fsys, err := fs.Sub(tmplFS, "_template")
-	if err != nil {
-		panic(err)
-	}
-	ar, err := txtarfs.From(fsys)
-	if err != nil {
-		panic(err)
-	}
-	strTmpl := string(txtar.Format(ar))
-	DefaultTemplate = template.Must(template.New("skeleton").Delims("@@", "@@").Funcs(DefaultFuncMap).Parse(strTmpl))
+	DefaultTemplate = template.Must(skeletonkit.ParseTemplate(tmplFS, "skeleton", "_template"))
 }
