@@ -22,6 +22,7 @@ var (
 
 func init() {
 	flag.BoolVar(&flagUpdate, "update", false, "update golden files")
+	os.Setenv("SKELETON_PREFIX", "")
 }
 
 func TestSkeletonRun(t *testing.T) {
@@ -91,7 +92,7 @@ func TestSkeletonRun(t *testing.T) {
 			}
 
 			want := readTestData(t, name)
-			if diff := cmp.Diff(got, want); diff != "" {
+			if diff := cmp.Diff(want, got); diff != "" {
 				t.Error(diff)
 			}
 		})
