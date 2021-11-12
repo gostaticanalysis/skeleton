@@ -139,6 +139,14 @@ skeleton accepts `-kind` option which indicates kind of skeleton code.
 * `-kind=ssa`: generate skeleton code with `buildssa.Analyzer`
 * `-kind=codegen`: generate skeleton code of a code generator
 
+### Module path with prefix
+
+```sh
+$ SKELETON_PREFIX=example.com skeleton pkgname
+$ head -1 pkgname/go.mod
+module example.com/pkgname
+```
+
 ## Build as a plugin for golangci-lint
 
 `skeleton` generates plugin directory which has main.go.
