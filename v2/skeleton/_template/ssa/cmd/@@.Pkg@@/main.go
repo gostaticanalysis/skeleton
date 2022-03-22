@@ -1,5 +1,4 @@
 @@ if .Cmd -@@
-@@ if (or (eq .Kind "inspect") (eq .Kind "ssa")) -@@
 package main
 
 import (
@@ -20,5 +19,4 @@ import (
 func main() {
 	@@.Checker@@generator.Main(@@.Pkg@@.Generator)
 }
-@@ end -@@
 @@end@@

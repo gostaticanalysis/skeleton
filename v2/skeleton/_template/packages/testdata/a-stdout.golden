@@ -1,0 +1,4 @@
+@@ if eq .Kind "packages" -@@
+a.go:5:6 identifier is gopher
+a.go:6:8 identifier is gopher
+@@ end -@@

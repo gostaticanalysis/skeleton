@@ -12,12 +12,16 @@ type Generator struct {
 }
 
 func (g *Generator) Run(info *Info) (fs.FS, error) {
-	return skeletonkit.ExecuteTemplate(g.template(), info)
+	tmpl, err := g.template(info)
+	if err != nil {
+		return nil, err
+	}
+	return skeletonkit.ExecuteTemplate(tmpl, info)
 }
 
-func (g *Generator) template() *template.Template {
+func (g *Generator) template(info *Info) (*template.Template, error) {
 	if g.Template != nil {
-		return g.Template
+		return g.Template, nil
 	}
-	return DefaultTemplate
+	return parseTemplate(info.Kind)
 }

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -78,7 +79,7 @@ func (s *Skeleton) parseFlag(args []string, info *Info) (*flag.FlagSet, error) {
 	}
 	flags.Var(&info.Checker, "checker", "[unit,single,multi]")
 
-	flags.Var(&info.Kind, "kind", "[inspect,ssa,codegen]")
+	flags.Var(&info.Kind, "kind", "[inspect,ssa,codegen,packages]")
 
 	flags.BoolVar(&info.Cmd, "cmd", true, "create main file")
 	flags.BoolVar(&info.Plugin, "plugin", false, "create golangci-lint plugin")
@@ -117,7 +118,13 @@ func (s *Skeleton) run(info *Info) error {
 	}
 
 	dst := filepath.Join(s.Dir, info.Pkg)
-	if err := skeletonkit.CreateDir(prompt, dst, fsys); err != nil {
+	opts := []skeletonkit.CreatorOption{
+		skeletonkit.CreatorWithEmpty(true),
+		skeletonkit.CreatorWithSkipFunc(func(p string, d fs.DirEntry) bool {
+			return !info.Plugin && path.Base(p) == "plugin"
+		}),
+	}
+	if err := skeletonkit.CreateDir(prompt, dst, fsys, opts...); err != nil {
 		return err
 	}
 	return nil

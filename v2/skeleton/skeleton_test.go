@@ -41,6 +41,10 @@ func TestSkeletonRun(t *testing.T) {
 		"nocmd":                 {"", "-cmd=false example.com/example", "", skeleton.ExitSuccess, ""},
 		"onlypkgname":           {"", "example", "", skeleton.ExitSuccess, ""},
 		"version":               {"", "-v", "", skeleton.ExitSuccess, "skeleton version\n"},
+		"kind-inspect":          {"", "-kind inspect example.com/example", "", skeleton.ExitSuccess, ""},
+		"kind-ssa":              {"", "-kind ssa example.com/example", "", skeleton.ExitSuccess, ""},
+		"kind-codegen":          {"", "-kind codegen example.com/example", "", skeleton.ExitSuccess, ""},
+		"kind-packages":         {"", "-kind packages example.com/example", "", skeleton.ExitSuccess, ""},
 	}
 
 	if flagUpdate {
