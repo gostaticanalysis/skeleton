@@ -48,14 +48,14 @@ func testdata(t *testing.T) string {
 
 func run(t *testing.T, pkg *packages.Package) {
 	var stdin, stdout, stderr bytes.Buffer
-	pass := &mypackages.Pass{
+	pass := &@@.Pkg@@.Pass{
 		Stdin:  &stdin,
 		Stdout: &stdout,
 		Stderr: &stderr,
 		Pkg:    pkg,
 	}
 
-	if err := mypackages.Analyzer.Run(pass); err != nil {
+	if err := @@.Pkg@@.Analyzer.Run(pass); err != nil {
 		t.Error("unexpected error:", err)
 	}
 

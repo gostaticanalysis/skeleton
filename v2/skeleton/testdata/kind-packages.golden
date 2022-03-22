@@ -158,14 +158,14 @@ func testdata(t *testing.T) string {
 
 func run(t *testing.T, pkg *packages.Package) {
 	var stdin, stdout, stderr bytes.Buffer
-	pass := &mypackages.Pass{
+	pass := &example.Pass{
 		Stdin:  &stdin,
 		Stdout: &stdout,
 		Stderr: &stderr,
 		Pkg:    pkg,
 	}
 
-	if err := mypackages.Analyzer.Run(pass); err != nil {
+	if err := example.Analyzer.Run(pass); err != nil {
 		t.Error("unexpected error:", err)
 	}
 
@@ -201,6 +201,7 @@ module example.com/example
 
 go 1.18
 
+-- example/testdata/a-stderr.golden --
 -- example/testdata/a-stdout.golden --
 a.go:5:6 identifier is gopher
 a.go:6:8 identifier is gopher
