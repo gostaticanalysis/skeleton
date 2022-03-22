@@ -1,0 +1,219 @@
+-- example/cmd/example/main.go --
+package main
+
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"os"
+
+	"example"
+
+	"golang.org/x/tools/go/packages"
+)
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	example.Analyzer.Flags = flag.NewFlagSet(example.Analyzer.Name, flag.ExitOnError)
+	example.Analyzer.Flags.Parse(os.Args[1:])
+
+	if example.Analyzer.Flags.NArg() < 1 {
+		return errors.New("patterns of packages must be specified")
+	}
+
+	pkgs, err := packages.Load(example.Analyzer.Config, example.Analyzer.Flags.Args()...)
+	if err != nil {
+		return err
+	}
+
+	for _, pkg := range pkgs {
+		pass := &example.Pass{
+			Stdin:  os.Stdin,
+			Stdout: os.Stdout,
+			Stderr: os.Stderr,
+			Pkg:    pkg,
+		}
+		if err := example.Analyzer.Run(pass); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+-- example/example.go --
+package example
+
+import (
+	"flag"
+	"fmt"
+	"go/ast"
+	"io"
+	"path/filepath"
+
+	"golang.org/x/tools/go/ast/inspector"
+	"golang.org/x/tools/go/packages"
+)
+
+type Pass struct {
+	Pkg    *packages.Package
+	Stdin  io.Reader
+	Stdout io.Writer
+	Stderr io.Writer
+}
+
+var Analyzer = struct {
+	Name   string
+	Doc    string
+	Flags  *flag.FlagSet
+	Config *packages.Config
+	Run    func(pass *Pass) error
+}{
+	Name: "example",
+	Doc:  "example is ...",
+	Config: &packages.Config{
+		Mode: packages.NeedName | packages.NeedTypes |
+			packages.NeedSyntax | packages.NeedTypesInfo |
+			packages.NeedModule,
+	},
+	Run: run,
+}
+
+func run(pass *Pass) error {
+	inspect := inspector.New(pass.Pkg.Syntax)
+
+	nodeFilter := []ast.Node{
+		(*ast.Ident)(nil),
+	}
+
+	inspect.Preorder(nodeFilter, func(n ast.Node) {
+		switch n := n.(type) {
+		case *ast.Ident:
+			if n.Name == "gopher" {
+				pos := pass.Pkg.Fset.Position(n.Pos())
+				fname, err := filepath.Rel(pass.Pkg.Module.Dir, pos.Filename)
+				if err != nil {
+					return
+				}
+				fmt.Fprintf(pass.Stdout, "%s:%d:%d identifier is gopher\n", fname, pos.Line, pos.Column)
+			}
+		}
+	})
+
+	return nil
+}
+-- example/example_test.go --
+package example_test
+
+import (
+	"bytes"
+	"flag"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"example.com/example"
+	"github.com/tenntenn/golden"
+	"golang.org/x/tools/go/packages"
+)
+
+var (
+	flagUpdate bool
+)
+
+func init() {
+	flag.BoolVar(&flagUpdate, "update", false, "update golden files")
+}
+
+func Test(t *testing.T) {
+	pkgs := load(t, testdata(t), "a")
+	for _, pkg := range pkgs {
+		run(t, pkg)
+	}
+}
+
+func load(t *testing.T, testdata string, pkgname string) []*packages.Package {
+	t.Helper()
+	example.Analyzer.Config.Dir = filepath.Join(testdata, "src", pkgname)
+	pkgs, err := packages.Load(example.Analyzer.Config, pkgname)
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+	return pkgs
+}
+
+func testdata(t *testing.T) string {
+	t.Helper()
+	dir, err := filepath.Abs("testdata")
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+	return dir
+}
+
+func run(t *testing.T, pkg *packages.Package) {
+	var stdin, stdout, stderr bytes.Buffer
+	pass := &mypackages.Pass{
+		Stdin:  &stdin,
+		Stdout: &stdout,
+		Stderr: &stderr,
+		Pkg:    pkg,
+	}
+
+	if err := mypackages.Analyzer.Run(pass); err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	pkgname := pkgname(pkg)
+
+	if flagUpdate {
+		golden.Update(t, testdata(t), pkgname+"-stdout", &stdout)
+		golden.Update(t, testdata(t), pkgname+"-stderr", &stderr)
+		return
+	}
+
+	if diff := golden.Diff(t, testdata(t), pkgname+"-stdout", &stdout); diff != "" {
+		t.Errorf("stdout of analyzing %s:\n%s", pkgname, diff)
+	}
+
+	if diff := golden.Diff(t, testdata(t), pkgname+"-stderr", &stderr); diff != "" {
+		t.Errorf("stderr of analyzing %s:\n%s", pkgname, diff)
+	}
+}
+
+func pkgname(pkg *packages.Package) string {
+	switch {
+	case pkg.PkgPath != "":
+		return strings.ReplaceAll(pkg.PkgPath, "/", "-")
+	case pkg.Name != "":
+		return pkg.Name
+	default:
+		return pkg.ID
+	}
+}
+-- example/go.mod --
+module example.com/example
+
+go 1.18
+
+-- example/testdata/a-stdout.golden --
+a.go:5:6 identifier is gopher
+a.go:6:8 identifier is gopher
+-- example/testdata/src/a/a.go --
+package a
+
+func f() {
+	// The pattern can be written in regular expression.
+	var gopher int // want "pattern"
+	print(gopher)  // want "identifier is gopher"
+}
+-- example/testdata/src/a/go.mod --
+module a
+
+go 1.18
+

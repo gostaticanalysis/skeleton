@@ -1,14 +1,20 @@
 -- example/cmd/example/main.go --
+package main
 
+import (
+	"example.com/example"
+	"golang.org/x/tools/go/analysis/unitchecker"
+)
+
+func main() { unitchecker.Main(example.Analyzer) }
 -- example/example.go --
 package example
 
 import (
-	"go/ast"
+	"fmt"
 
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
+	"golang.org/x/tools/go/analysis/passes/buildssa"
 )
 
 const doc = "example is ..."
@@ -19,26 +25,26 @@ var Analyzer = &analysis.Analyzer{
 	Doc:  doc,
 	Run:  run,
 	Requires: []*analysis.Analyzer{
-		inspect.Analyzer,
+		buildssa.Analyzer,
 	},
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-
-	nodeFilter := []ast.Node{
-		(*ast.Ident)(nil),
-	}
-
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
-		switch n := n.(type) {
-		case *ast.Ident:
-			if n.Name == "gopher" {
-				pass.Reportf(n.Pos(), "identifier is gopher")
+	s := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
+	for _, f := range s.SrcFuncs {
+		fmt.Println(f)
+		for _, b := range f.Blocks {
+			fmt.Printf("\tBlock %d\n", b.Index)
+			for _, instr := range b.Instrs {
+				fmt.Printf("\t\t%[1]T\t%[1]v(%[1]p)\n", instr)
+				for _, v := range instr.Operands(nil) {
+					if v != nil {
+						fmt.Printf("\t\t\t%[1]T\t%[1]v(%[1]p)\n", *v)
+					}
+				}
 			}
 		}
-	})
-
+	}
 	return nil, nil
 }
 -- example/example_test.go --

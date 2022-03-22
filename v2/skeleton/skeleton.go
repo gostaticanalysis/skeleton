@@ -78,7 +78,7 @@ func (s *Skeleton) parseFlag(args []string, info *Info) (*flag.FlagSet, error) {
 	}
 	flags.Var(&info.Checker, "checker", "[unit,single,multi]")
 
-	flags.Var(&info.Kind, "kind", "[inspect,ssa,codegen]")
+	flags.Var(&info.Kind, "kind", "[inspect,ssa,codegen,packages]")
 
 	flags.BoolVar(&info.Cmd, "cmd", true, "create main file")
 	flags.BoolVar(&info.Plugin, "plugin", false, "create golangci-lint plugin")
