@@ -1,0 +1,12 @@
+a.f
+	Block 0
+		*ssa.Call	print(0:int)(0x0000)
+			*ssa.Builtin	builtin print(0x0000)
+			*ssa.Const	0:int(0x0000)
+		*ssa.Return	return(0x0000)
+--- FAIL: TestAnalyzer (0000s)
+    analysistest.go:518: a/a.go:5: no diagnostic was reported matching `pattern`
+    analysistest.go:518: a/a.go:6: no diagnostic was reported matching `identifier is gopher`
+FAIL
+exit status 1
+FAIL	example.com/example	0000s
