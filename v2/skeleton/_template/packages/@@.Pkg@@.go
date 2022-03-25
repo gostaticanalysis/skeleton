@@ -34,9 +34,13 @@ func run(pass *internal.Pass) error {
 		case *ast.Ident:
 			if n.Name == "gopher" {
 				pos := pass.Fset.Position(n.Pos())
-				fname, err := filepath.Rel(pass.Module.Dir, pos.Filename)
-				if err != nil {
-					return
+				fname := pos.Filename
+				if pass.Module != nil {
+					var err error
+					fname, err = filepath.Rel(pass.Module.Dir, fname)
+					if err != nil {
+						return
+					}
 				}
 				fmt.Fprintf(pass.Stdout, "%s:%d:%d identifier is gopher\n", fname, pos.Line, pos.Column)
 			}
