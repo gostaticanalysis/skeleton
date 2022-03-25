@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"os"
 
-	"@@.Pkg@@"
+	"@@.Path@@"
+	"@@.Path@@/internal"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -32,12 +33,20 @@ func run() error {
 	}
 
 	for _, pkg := range pkgs {
-		pass := &@@.Pkg@@.Pass{
-			Stdin:  os.Stdin,
-			Stdout: os.Stdout,
-			Stderr: os.Stderr,
-			Pkg:    pkg,
+		prog, srcFuncs, err := internal.Buildssa(pkg, @@.Pkg@@.Analyzer.SSABuilderMode)
+		if err != nil {
+			return err
 		}
+
+		pass := &@@.Pkg@@.Pass{
+			Package:  pkg,
+			SSA:      prog,
+			SrcFuncs: srcFuncs,
+			Stdin:    os.Stdin,
+			Stdout:   os.Stdout,
+			Stderr:   os.Stderr,
+		}
+
 		if err := @@.Pkg@@.Analyzer.Run(pass); err != nil {
 			return err
 		}

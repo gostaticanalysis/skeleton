@@ -2,8 +2,12 @@ package skeleton_test
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -30,21 +34,22 @@ func TestSkeletonRun(t *testing.T) {
 
 		wantExitCode int
 		wantOutput   string
+		wantGoTest   bool
 	}{
-		"nooption":              {"", "example.com/example", "", skeleton.ExitSuccess, ""},
-		"overwrite-cancel":      {F(t, "example/go.mod", "// empty"), "example.com/example", "1\n", skeleton.ExitSuccess, ""},
-		"overwrite-force":       {F(t, "example/go.mod", "// empty"), "example.com/example", "2\n", skeleton.ExitSuccess, ""},
-		"overwrite-confirm-yes": {F(t, "example/go.mod", "// empty"), "example.com/example", "3\ny\n", skeleton.ExitSuccess, ""},
-		"overwrite-confirm-no":  {F(t, "example/go.mod", "// empty"), "example.com/example", "3\nn\n", skeleton.ExitSuccess, ""},
-		"overwrite-newonly":     {F(t, "example/go.mod", "// empty"), "example.com/example", "4\n", skeleton.ExitSuccess, ""},
-		"plugin":                {"", "-plugin example.com/example", "", skeleton.ExitSuccess, ""},
-		"nocmd":                 {"", "-cmd=false example.com/example", "", skeleton.ExitSuccess, ""},
-		"onlypkgname":           {"", "example", "", skeleton.ExitSuccess, ""},
-		"version":               {"", "-v", "", skeleton.ExitSuccess, "skeleton version\n"},
-		"kind-inspect":          {"", "-kind inspect example.com/example", "", skeleton.ExitSuccess, ""},
-		"kind-ssa":              {"", "-kind ssa example.com/example", "", skeleton.ExitSuccess, ""},
-		"kind-codegen":          {"", "-kind codegen example.com/example", "", skeleton.ExitSuccess, ""},
-		"kind-packages":         {"", "-kind packages example.com/example", "", skeleton.ExitSuccess, ""},
+		"nooption":              {"", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"overwrite-cancel":      {F(t, "example/go.mod", "// empty"), "example.com/example", "1\n", skeleton.ExitSuccess, "", false},
+		"overwrite-force":       {F(t, "example/go.mod", "// empty"), "example.com/example", "2\n", skeleton.ExitSuccess, "", true},
+		"overwrite-confirm-yes": {F(t, "example/go.mod", "// empty"), "example.com/example", "3\ny\n", skeleton.ExitSuccess, "", true},
+		"overwrite-confirm-no":  {F(t, "example/go.mod", "// empty"), "example.com/example", "3\nn\n", skeleton.ExitSuccess, "", false},
+		"overwrite-newonly":     {F(t, "example/go.mod", "// empty"), "example.com/example", "4\n", skeleton.ExitSuccess, "", false},
+		"plugin":                {"", "-plugin example.com/example", "", skeleton.ExitSuccess, "", true},
+		"nocmd":                 {"", "-cmd=false example.com/example", "", skeleton.ExitSuccess, "", true},
+		"onlypkgname":           {"", "example", "", skeleton.ExitSuccess, "", true},
+		"version":               {"", "-v", "", skeleton.ExitSuccess, "skeleton version\n", false},
+		"kind-inspect":          {"", "-kind inspect example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-ssa":              {"", "-kind ssa example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-codegen":          {"", "-kind codegen example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-packages":         {"", "-kind packages example.com/example", "", skeleton.ExitSuccess, "", true},
 	}
 
 	if flagUpdate {
@@ -86,6 +91,19 @@ func TestSkeletonRun(t *testing.T) {
 
 			got := golden.Txtar(t, s.Dir)
 
+			if tt.wantGoTest {
+				entries, err := os.ReadDir(dir)
+				if err != nil {
+					t.Fatal("unexpected error:", err)
+				}
+
+				if len(entries) > 0 {
+					skeletondir := filepath.Join(dir, entries[0].Name())
+					gomodtidy(t, skeletondir)
+					gotest(t, name, skeletondir)
+				}
+			}
+
 			if flagUpdate {
 				golden.Update(t, "testdata", name, got)
 				return
@@ -95,5 +113,47 @@ func TestSkeletonRun(t *testing.T) {
 				t.Error(diff)
 			}
 		})
+	}
+}
+
+func gomodtidy(t *testing.T, dir string) {
+	t.Helper()
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Dir = dir
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("go mod tidy: unexpected error: %s with:\n%s", err, &stderr)
+	}
+}
+
+var (
+	timeRegexp = regexp.MustCompile(`([\(\t])([0-9.]+s)(\)?)`)
+)
+
+func gotest(t *testing.T, name, dir string) {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("go", "test")
+	cmd.Dir = dir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	t.Log("exec", cmd)
+
+	if err := cmd.Run(); err != nil && !errors.As(err, new(*exec.ExitError)) {
+		t.Fatal("unexpected error:", err)
+	}
+
+	got := stdout.String() + stderr.String()
+	got = timeRegexp.ReplaceAllString(got, "${1}0000s${3}")
+
+	goldenname := name + "-go-test"
+	if flagUpdate {
+		golden.Update(t, "testdata", goldenname, got)
+		return
+	}
+
+	if diff := golden.Diff(t, "testdata", goldenname, got); diff != "" {
+		t.Error(diff)
 	}
 }
