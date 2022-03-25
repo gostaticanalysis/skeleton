@@ -33,12 +33,12 @@ func run() error {
 	}
 
 	for _, pkg := range pkgs {
-		prog, srcFuncs, err := internal.Buildssa(pkg, @@.Pkg@@.Analyzer.SSABuilderMode)
+		prog, srcFuncs, err := internal.BuildSSA(pkg, @@.Pkg@@.Analyzer.SSABuilderMode)
 		if err != nil {
 			return err
 		}
 
-		pass := &@@.Pkg@@.Pass{
+		pass := &internal.Pass{
 			Package:  pkg,
 			SSA:      prog,
 			SrcFuncs: srcFuncs,

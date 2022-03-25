@@ -7,3 +7,5 @@ require (
 	github.com/tenntenn/golden v0.2.0
 	golang.org/x/mod v0.4.2
 )
+
+retract v2.1.1
