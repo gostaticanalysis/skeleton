@@ -1,4 +1,8 @@
-@@ if eq .Kind "packages" -@@
 a.go:5:6 identifier is gopher
 a.go:6:8 identifier is gopher
-@@ end -@@
+a.f
+	Block 0
+		*ssa.Call	print(0:int)(0xc0000dc380)
+			*ssa.Builtin	builtin print(0xc0000b8510)
+			*ssa.Const	0:int(0xc000090c80)
+		*ssa.Return	return(0xc0000a3cb0)

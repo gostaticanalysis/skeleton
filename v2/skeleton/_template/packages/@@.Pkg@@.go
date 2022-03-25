@@ -1,30 +1,16 @@
 package @@.Pkg@@
 
 import (
-	"flag"
 	"fmt"
 	"go/ast"
-	"io"
 	"path/filepath"
 
+	"@@.Path@@/internal"
 	"golang.org/x/tools/go/ast/inspector"
 	"golang.org/x/tools/go/packages"
 )
 
-type Pass struct {
-	Pkg    *packages.Package
-	Stdin  io.Reader
-	Stdout io.Writer
-	Stderr io.Writer
-}
-
-var Analyzer = struct {
-	Name   string
-	Doc    string
-	Flags  *flag.FlagSet
-	Config *packages.Config
-	Run    func(pass *Pass) error
-}{
+var Analyzer = &internal.Analyzer{
 	Name: "@@.Pkg@@",
 	Doc:  "@@.Pkg@@ is ...",
 	Config: &packages.Config{
@@ -32,11 +18,12 @@ var Analyzer = struct {
 			packages.NeedSyntax | packages.NeedTypesInfo |
 			packages.NeedModule,
 	},
-	Run: run,
+	SSABuilderMode: 0,
+	Run:            run,
 }
 
-func run(pass *Pass) error {
-	inspect := inspector.New(pass.Pkg.Syntax)
+func run(pass *internal.Pass) error {
+	inspect := inspector.New(pass.Syntax)
 
 	nodeFilter := []ast.Node{
 		(*ast.Ident)(nil),
@@ -46,8 +33,8 @@ func run(pass *Pass) error {
 		switch n := n.(type) {
 		case *ast.Ident:
 			if n.Name == "gopher" {
-				pos := pass.Pkg.Fset.Position(n.Pos())
-				fname, err := filepath.Rel(pass.Pkg.Module.Dir, pos.Filename)
+				pos := pass.Fset.Position(n.Pos())
+				fname, err := filepath.Rel(pass.Module.Dir, pos.Filename)
 				if err != nil {
 					return
 				}
@@ -55,6 +42,22 @@ func run(pass *Pass) error {
 			}
 		}
 	})
+
+	// See: golang.org/x/tools/go/ssa
+	for _, f := range pass.SrcFuncs {
+		fmt.Fprintln(pass.Stdout, f)
+		for _, b := range f.Blocks {
+			fmt.Fprintf(pass.Stdout, "\tBlock %d\n", b.Index)
+			for _, instr := range b.Instrs {
+				fmt.Fprintf(pass.Stdout, "\t\t%[1]T\t%[1]v(%[1]p)\n", instr)
+				for _, v := range instr.Operands(nil) {
+					if v != nil {
+						fmt.Fprintf(pass.Stdout, "\t\t\t%[1]T\t%[1]v(%[1]p)\n", *v)
+					}
+               			}
+			}
+		}
+	}
 
 	return nil
 }

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 
-	"example"
-
+	"example.com/example"
+	"example.com/example/internal"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -33,12 +33,20 @@ func run() error {
 	}
 
 	for _, pkg := range pkgs {
-		pass := &example.Pass{
-			Stdin:  os.Stdin,
-			Stdout: os.Stdout,
-			Stderr: os.Stderr,
-			Pkg:    pkg,
+		prog, srcFuncs, err := internal.Buildssa(pkg, example.Analyzer.SSABuilderMode)
+		if err != nil {
+			return err
 		}
+
+		pass := &example.Pass{
+			Package:  pkg,
+			SSA:      prog,
+			SrcFuncs: srcFuncs,
+			Stdin:    os.Stdin,
+			Stdout:   os.Stdout,
+			Stderr:   os.Stderr,
+		}
+
 		if err := example.Analyzer.Run(pass); err != nil {
 			return err
 		}
@@ -50,30 +58,16 @@ func run() error {
 package example
 
 import (
-	"flag"
 	"fmt"
 	"go/ast"
-	"io"
 	"path/filepath"
 
+	"example.com/example/internal"
 	"golang.org/x/tools/go/ast/inspector"
 	"golang.org/x/tools/go/packages"
 )
 
-type Pass struct {
-	Pkg    *packages.Package
-	Stdin  io.Reader
-	Stdout io.Writer
-	Stderr io.Writer
-}
-
-var Analyzer = struct {
-	Name   string
-	Doc    string
-	Flags  *flag.FlagSet
-	Config *packages.Config
-	Run    func(pass *Pass) error
-}{
+var Analyzer = &internal.Analyzer{
 	Name: "example",
 	Doc:  "example is ...",
 	Config: &packages.Config{
@@ -81,11 +75,12 @@ var Analyzer = struct {
 			packages.NeedSyntax | packages.NeedTypesInfo |
 			packages.NeedModule,
 	},
-	Run: run,
+	SSABuilderMode: 0,
+	Run:            run,
 }
 
-func run(pass *Pass) error {
-	inspect := inspector.New(pass.Pkg.Syntax)
+func run(pass *internal.Pass) error {
+	inspect := inspector.New(pass.Syntax)
 
 	nodeFilter := []ast.Node{
 		(*ast.Ident)(nil),
@@ -95,8 +90,8 @@ func run(pass *Pass) error {
 		switch n := n.(type) {
 		case *ast.Ident:
 			if n.Name == "gopher" {
-				pos := pass.Pkg.Fset.Position(n.Pos())
-				fname, err := filepath.Rel(pass.Pkg.Module.Dir, pos.Filename)
+				pos := pass.Fset.Position(n.Pos())
+				fname, err := filepath.Rel(pass.Module.Dir, pos.Filename)
 				if err != nil {
 					return
 				}
@@ -104,6 +99,22 @@ func run(pass *Pass) error {
 			}
 		}
 	})
+
+	// See: golang.org/x/tools/go/ssa
+	for _, f := range pass.SrcFuncs {
+		fmt.Fprintln(pass.Stdout, f)
+		for _, b := range f.Blocks {
+			fmt.Fprintf(pass.Stdout, "\tBlock %d\n", b.Index)
+			for _, instr := range b.Instrs {
+				fmt.Fprintf(pass.Stdout, "\t\t%[1]T\t%[1]v(%[1]p)\n", instr)
+				for _, v := range instr.Operands(nil) {
+					if v != nil {
+						fmt.Fprintf(pass.Stdout, "\t\t\t%[1]T\t%[1]v(%[1]p)\n", *v)
+					}
+				}
+			}
+		}
+	}
 
 	return nil
 }
@@ -118,8 +129,10 @@ import (
 	"testing"
 
 	"example.com/example"
+	"example.com/example/internal"
 	"github.com/tenntenn/golden"
 	"golang.org/x/tools/go/packages"
+	"golang.org/x/tools/go/ssa"
 )
 
 var (
@@ -133,7 +146,8 @@ func init() {
 func Test(t *testing.T) {
 	pkgs := load(t, testdata(t), "a")
 	for _, pkg := range pkgs {
-		run(t, pkg)
+		prog, funcs := buildssa(t, pkg)
+		run(t, pkg, prog, funcs)
 	}
 }
 
@@ -147,6 +161,15 @@ func load(t *testing.T, testdata string, pkgname string) []*packages.Package {
 	return pkgs
 }
 
+func buildssa(t *testing.T, pkg *packages.Package) (*ssa.Program, []*ssa.Function) {
+	t.Helper()
+	program, funcs, err := internal.BuildSSA(pkg, example.Analyzer.SSABuilderMode)
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+	return program, funcs
+}
+
 func testdata(t *testing.T) string {
 	t.Helper()
 	dir, err := filepath.Abs("testdata")
@@ -156,13 +179,15 @@ func testdata(t *testing.T) string {
 	return dir
 }
 
-func run(t *testing.T, pkg *packages.Package) {
+func run(t *testing.T, pkg *packages.Package, prog *ssa.Program, funcs []*ssa.Function) {
 	var stdin, stdout, stderr bytes.Buffer
-	pass := &example.Pass{
-		Stdin:  &stdin,
-		Stdout: &stdout,
-		Stderr: &stderr,
-		Pkg:    pkg,
+	pass := &internal.Pass{
+		Stdin:    &stdin,
+		Stdout:   &stdout,
+		Stderr:   &stderr,
+		Package:  pkg,
+		SSA:      prog,
+		SrcFuncs: funcs,
 	}
 
 	if err := example.Analyzer.Run(pass); err != nil {
@@ -201,10 +226,123 @@ module example.com/example
 
 go 1.18
 
+-- example/internal/analyzer.go --
+package internal
+
+import (
+	"flag"
+	"io"
+
+	"golang.org/x/tools/go/packages"
+	"golang.org/x/tools/go/ssa"
+)
+
+type Pass struct {
+	*packages.Package
+	SSA      *ssa.Program
+	SrcFuncs []*ssa.Function
+	Stdin    io.Reader
+	Stdout   io.Writer
+	Stderr   io.Writer
+}
+
+type Analyzer struct {
+	Name           string
+	Doc            string
+	Flags          *flag.FlagSet
+	Config         *packages.Config
+	SSABuilderMode ssa.BuilderMode
+	Run            func(pass *Pass) error
+}
+-- example/internal/buildssa.go --
+package internal
+
+import (
+	"go/ast"
+	"go/types"
+
+	"golang.org/x/tools/go/packages"
+	"golang.org/x/tools/go/ssa"
+)
+
+// copy from golang.org/x/tools/analysis/passes/buildssa
+func BuildSSA(pkg *packages.Package, mode ssa.BuilderMode) (*ssa.Program, []*ssa.Function, error) {
+
+	prog := ssa.NewProgram(pkg.Fset, mode)
+
+	// Create SSA packages for all imports.
+	// Order is not significant.
+	created := make(map[*types.Package]bool)
+	var createAll func(pkgs []*types.Package)
+	createAll = func(pkgs []*types.Package) {
+		for _, p := range pkgs {
+			if !created[p] {
+				created[p] = true
+				prog.CreatePackage(p, nil, nil, true)
+				createAll(p.Imports())
+			}
+		}
+	}
+	createAll(pkg.Types.Imports())
+
+	// Create and build the primary package.
+	ssapkg := prog.CreatePackage(pkg.Types, pkg.Syntax, pkg.TypesInfo, false)
+	ssapkg.Build()
+
+	// Compute list of source functions, including literals,
+	// in source order.
+	var funcs []*ssa.Function
+	for _, f := range pkg.Syntax {
+		for _, decl := range f.Decls {
+			if fdecl, ok := decl.(*ast.FuncDecl); ok {
+
+				// SSA will not build a Function
+				// for a FuncDecl named blank.
+				// That's arguably too strict but
+				// relaxing it would break uniqueness of
+				// names of package members.
+				if fdecl.Name.Name == "_" {
+					continue
+				}
+
+				// (init functions have distinct Func
+				// objects named "init" and distinct
+				// ssa.Functions named "init#1", ...)
+
+				fn := pkg.TypesInfo.Defs[fdecl.Name].(*types.Func)
+				if fn == nil {
+					panic(fn)
+				}
+
+				f := ssapkg.Prog.FuncValue(fn)
+				if f == nil {
+					panic(fn)
+				}
+
+				var addAnons func(f *ssa.Function)
+				addAnons = func(f *ssa.Function) {
+					funcs = append(funcs, f)
+					for _, anon := range f.AnonFuncs {
+						addAnons(anon)
+					}
+				}
+				addAnons(f)
+			}
+		}
+	}
+
+	return prog, funcs, nil
+}
 -- example/testdata/a-stderr.golden --
 -- example/testdata/a-stdout.golden --
 a.go:5:6 identifier is gopher
 a.go:6:8 identifier is gopher
+a.f
+	Block 0
+		*ssa.Call	print(0:int)(0xc0000dc380)
+			*ssa.Builtin	builtin print(0xc0000b8510)
+			*ssa.Const	0:int(0xc000090c80)
+		*ssa.Return	return(0xc0000a3cb0)
 -- example/testdata/src/a/a.go --
 package a
 

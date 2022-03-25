@@ -8,8 +8,10 @@ import (
 	"testing"
 
 	"@@.Path@@"
+	"@@.Path@@/internal"
 	"github.com/tenntenn/golden"
 	"golang.org/x/tools/go/packages"
+	"golang.org/x/tools/go/ssa"
 )
 
 var (
@@ -23,7 +25,8 @@ func init() {
 func Test(t *testing.T) {
 	pkgs := load(t, testdata(t), "a")
 	for _, pkg := range pkgs {
-		run(t, pkg)
+		prog, funcs := buildssa(t, pkg)
+		run(t, pkg, prog, funcs)
 	}
 }
 
@@ -37,6 +40,15 @@ func load(t *testing.T, testdata string, pkgname string) []*packages.Package {
 	return pkgs
 }
 
+func buildssa(t *testing.T, pkg *packages.Package) (*ssa.Program, []*ssa.Function) {
+	t.Helper()
+	program, funcs, err := internal.BuildSSA(pkg, @@.Pkg@@.Analyzer.SSABuilderMode)
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+	return program, funcs
+}
+
 func testdata(t *testing.T) string {
 	t.Helper()
 	dir, err := filepath.Abs("testdata")
@@ -46,13 +58,15 @@ func testdata(t *testing.T) string {
 	return dir
 }
 
-func run(t *testing.T, pkg *packages.Package) {
+func run(t *testing.T, pkg *packages.Package, prog *ssa.Program, funcs []*ssa.Function) {
 	var stdin, stdout, stderr bytes.Buffer
-	pass := &@@.Pkg@@.Pass{
-		Stdin:  &stdin,
-		Stdout: &stdout,
-		Stderr: &stderr,
-		Pkg:    pkg,
+	pass := &internal.Pass{
+		Stdin:    &stdin,
+		Stdout:   &stdout,
+		Stderr:   &stderr,
+		Package:  pkg,
+		SSA:      prog,
+		SrcFuncs: funcs,
 	}
 
 	if err := @@.Pkg@@.Analyzer.Run(pass); err != nil {

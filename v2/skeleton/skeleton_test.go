@@ -135,7 +135,7 @@ var (
 func gotest(t *testing.T, name, dir string) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("go", "test")
+	cmd := exec.Command("go", "test", "-update")
 	cmd.Dir = dir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
