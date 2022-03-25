@@ -129,7 +129,6 @@ func gomodtidy(t *testing.T, dir string) {
 
 var (
 	timeRegexp = regexp.MustCompile(`([\(\t])([0-9.]+s)(\)?)`)
-	hexRegexp  = regexp.MustCompile(`(\()(0x[0-9a-f]+)(\))`)
 )
 
 func gotest(t *testing.T, name, dir string) {
@@ -147,7 +146,6 @@ func gotest(t *testing.T, name, dir string) {
 
 	got := stdout.String() + stderr.String()
 	got = timeRegexp.ReplaceAllString(got, "${1}0000s${3}")
-	got = hexRegexp.ReplaceAllString(got, "${1}0x0000${3}")
 
 	goldenname := name + "-go-test"
 	if flagUpdate {
