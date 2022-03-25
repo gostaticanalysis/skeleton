@@ -106,10 +106,10 @@ func run(pass *internal.Pass) error {
 		for _, b := range f.Blocks {
 			fmt.Fprintf(pass.Stdout, "\tBlock %d\n", b.Index)
 			for _, instr := range b.Instrs {
-				fmt.Fprintf(pass.Stdout, "\t\t%[1]T\t%[1]v(%[1]p)\n", instr)
+				fmt.Fprintf(pass.Stdout, "\t\t%[1]T\t%[1]v\n", instr)
 				for _, v := range instr.Operands(nil) {
 					if v != nil {
-						fmt.Fprintf(pass.Stdout, "\t\t\t%[1]T\t%[1]v(%[1]p)\n", *v)
+						fmt.Fprintf(pass.Stdout, "\t\t\t%[1]T\t%[1]v\n", *v)
 					}
 				}
 			}
@@ -339,10 +339,10 @@ a.go:5:6 identifier is gopher
 a.go:6:8 identifier is gopher
 a.f
 	Block 0
-		*ssa.Call	print(0:int)(0xc0000dc380)
-			*ssa.Builtin	builtin print(0xc0000b8510)
-			*ssa.Const	0:int(0xc000090c80)
-		*ssa.Return	return(0xc0000a3cb0)
+		*ssa.Call	print(0:int)
+			*ssa.Builtin	builtin print
+			*ssa.Const	0:int
+		*ssa.Return	return
 -- example/testdata/src/a/a.go --
 package a
 

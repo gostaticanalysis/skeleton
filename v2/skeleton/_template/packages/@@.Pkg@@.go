@@ -49,10 +49,10 @@ func run(pass *internal.Pass) error {
 		for _, b := range f.Blocks {
 			fmt.Fprintf(pass.Stdout, "\tBlock %d\n", b.Index)
 			for _, instr := range b.Instrs {
-				fmt.Fprintf(pass.Stdout, "\t\t%[1]T\t%[1]v(%[1]p)\n", instr)
+				fmt.Fprintf(pass.Stdout, "\t\t%[1]T\t%[1]v\n", instr)
 				for _, v := range instr.Operands(nil) {
 					if v != nil {
-						fmt.Fprintf(pass.Stdout, "\t\t\t%[1]T\t%[1]v(%[1]p)\n", *v)
+						fmt.Fprintf(pass.Stdout, "\t\t\t%[1]T\t%[1]v\n", *v)
 					}
                			}
 			}

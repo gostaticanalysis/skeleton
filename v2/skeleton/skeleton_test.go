@@ -17,6 +17,8 @@ import (
 
 var (
 	flagUpdate bool
+	timeRegexp = regexp.MustCompile(`([\(\t])([0-9.]+s)(\)?)`)
+	hexRegexp  = regexp.MustCompile(`(\()(0x[0-9a-f]+)(\))`)
 )
 
 func init() {
@@ -90,6 +92,7 @@ func TestSkeletonRun(t *testing.T) {
 			}
 
 			got := golden.Txtar(t, s.Dir)
+			got = hexRegexp.ReplaceAllString(got, "${1}0x0000${3}")
 
 			if tt.wantGoTest {
 				entries, err := os.ReadDir(dir)
@@ -127,15 +130,10 @@ func gomodtidy(t *testing.T, dir string) {
 	}
 }
 
-var (
-	timeRegexp = regexp.MustCompile(`([\(\t])([0-9.]+s)(\)?)`)
-	hexRegexp  = regexp.MustCompile(`(\()(0x[0-9a-f]+)(\))`)
-)
-
 func gotest(t *testing.T, name, dir string) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("go", "test", "-update")
+	cmd := exec.Command("go", "test")
 	cmd.Dir = dir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
