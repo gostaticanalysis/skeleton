@@ -36,10 +36,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		for _, b := range f.Blocks {
 			fmt.Printf("\tBlock %d\n", b.Index)
 			for _, instr := range b.Instrs {
-				fmt.Printf("\t\t%[1]T\t%[1]v(%[1]p)\n", instr)
+				fmt.Printf("\t\t%[1]T\t%[1]v\n", instr)
 				for _, v := range instr.Operands(nil) {
 					if v != nil {
-						fmt.Printf("\t\t\t%[1]T\t%[1]v(%[1]p)\n", *v)
+						fmt.Printf("\t\t\t%[1]T\t%[1]v\n", *v)
 					}
 				}
 			}
