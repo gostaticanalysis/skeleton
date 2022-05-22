@@ -1,15 +1,20 @@
 package skeleton
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 
+	"github.com/gostaticanalysis/skeleton/v2/skeleton/internal/gomod"
 	"github.com/gostaticanalysis/skeletonkit"
+	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
 )
 
@@ -51,7 +56,15 @@ func (s *Skeleton) Run(version string, args []string) int {
 	info.Path = flags.Arg(0)
 	if prefix := os.Getenv("SKELETON_PREFIX"); prefix != "" {
 		info.Path = path.Join(prefix, info.Path)
+	} else if !info.GoMod {
+		parentModule, err := gomod.ParentModule(s.Dir)
+		if err != nil {
+			fmt.Fprintln(s.ErrOutput, "Error:", err)
+			return ExitError
+		}
+		info.Path = path.Join(parentModule, info.Path)
 	}
+
 	// allow package name only
 	if module.CheckImportPath(info.Path) != nil {
 		flags.Usage()
@@ -84,6 +97,7 @@ func (s *Skeleton) parseFlag(args []string, info *Info) (*flag.FlagSet, error) {
 	flags.BoolVar(&info.Cmd, "cmd", true, "create main file")
 	flags.BoolVar(&info.Plugin, "plugin", false, "create golangci-lint plugin")
 	flags.StringVar(&info.Pkg, "pkg", "", "package name")
+	flags.BoolVar(&info.GoMod, "gomod", true, "create a go.mod file")
 
 	if err := flags.Parse(args); err != nil {
 		return nil, err
@@ -121,11 +135,40 @@ func (s *Skeleton) run(info *Info) error {
 	opts := []skeletonkit.CreatorOption{
 		skeletonkit.CreatorWithEmpty(true),
 		skeletonkit.CreatorWithSkipFunc(func(p string, d fs.DirEntry) bool {
-			return !info.Plugin && path.Base(p) == "plugin"
+			switch {
+			case !info.Plugin && path.Base(p) == "plugin":
+				return true
+			case !info.GoMod && path.Base(p) == "go.mod":
+				return true
+			}
+			return false // no skip
 		}),
 	}
 	if err := skeletonkit.CreateDir(prompt, dst, fsys, opts...); err != nil {
 		return err
 	}
 	return nil
+}
+
+func ParentModule(dir string) (string, error) {
+	var stdout bytes.Buffer
+	cmd := exec.Command("go", "env", "GOMOD")
+	cmd.Dir = dir
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("can not get the parent module: %w", err)
+	}
+
+	gomodfile := strings.TrimSpace(stdout.String())
+	moddata, err := os.ReadFile(gomodfile)
+	if err != nil {
+		return "", fmt.Errorf("cat not read the go.mod of the parent module: %w", err)
+	}
+
+	gomod, err := modfile.Parse(gomodfile, moddata, nil)
+	if err != nil {
+		return "", fmt.Errorf("cat parse the go.mod of the parent module: %w", err)
+	}
+
+	return gomod.Module.Mod.Path, nil
 }
