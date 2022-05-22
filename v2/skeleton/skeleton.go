@@ -54,15 +54,15 @@ func (s *Skeleton) Run(version string, args []string) int {
 	}
 
 	info.Path = flags.Arg(0)
-	if prefix := os.Getenv("SKELETON_PREFIX"); prefix != "" {
-		info.Path = path.Join(prefix, info.Path)
-	} else if !info.GoMod {
+	if !info.GoMod {
 		parentModule, err := gomod.ParentModule(s.Dir)
 		if err != nil {
 			fmt.Fprintln(s.ErrOutput, "Error:", err)
 			return ExitError
 		}
 		info.Path = path.Join(parentModule, info.Path)
+	} else if prefix := os.Getenv("SKELETON_PREFIX"); prefix != "" {
+		info.Path = path.Join(prefix, info.Path)
 	}
 
 	// allow package name only
