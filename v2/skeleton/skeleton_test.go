@@ -29,7 +29,7 @@ func init() {
 func TestSkeletonRun(t *testing.T) {
 	t.Parallel()
 	F := golden.TxtarWith
-	const noflags, emptyDir = "", ""
+	const noflags = ""
 	cases := map[string]struct {
 		dir     string
 		dirinit string
