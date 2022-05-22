@@ -155,3 +155,7 @@ If you would like to specify flags for your plugin, you can put them via `ldflag
 $ skeleton -plugin example.com/pkgname
 $ go build -buildmode=plugin -ldflags "-X 'main.flags=-funcs log.Fatal'" -o path_to_plugin_dir example.com/pkgname/plugin/pkgname
 ```
+
+### Without go.mod file
+
+If you give `-gomod=false` flag to skeleton, skeleton does not create a go.mod file.

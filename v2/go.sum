@@ -1,9 +1,5 @@
 github.com/google/go-cmp v0.5.6 h1:BKbKCqvP6I+rmFHt06ZmyQtvB8xAkWdhFyr0ZUNZcxQ=
 github.com/google/go-cmp v0.5.6/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
-github.com/gostaticanalysis/skeletonkit v0.2.0 h1:DKvDs7HENrSZA+p/tiwRqioeIwVy5Hsgsf1QGupgDt8=
-github.com/gostaticanalysis/skeletonkit v0.2.0/go.mod h1:SwFszYU8h5yWQE9rrWlpEiHXqa6zBl8M+y0kqvYpJX4=
-github.com/gostaticanalysis/skeletonkit v0.3.1 h1:hd93Bzc0w9SMcOc65BcYCLZiOwOsvqr+vsU2bpbL3kk=
-github.com/gostaticanalysis/skeletonkit v0.3.1/go.mod h1:UcRLvBDmeN7krfn6gM2W58XEA5IzjHxtX1NLGR3p2CM=
 github.com/gostaticanalysis/skeletonkit v0.4.0 h1:dHR48OSGfrbA6G36W5wd6TuY6w6Gooi4hRrvxa5uH9o=
 github.com/gostaticanalysis/skeletonkit v0.4.0/go.mod h1:UcRLvBDmeN7krfn6gM2W58XEA5IzjHxtX1NLGR3p2CM=
 github.com/josharian/mapfs v0.0.0-20210615234106-095c008854e6 h1:c+ctPFdISggaSNCfU1IueNBAsqetJSvMcpQlT+0OVdY=

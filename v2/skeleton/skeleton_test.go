@@ -6,12 +6,14 @@ import (
 	"flag"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/gostaticanalysis/skeleton/v2/skeleton"
+	"github.com/gostaticanalysis/skeleton/v2/skeleton/internal/gomod"
 	"github.com/tenntenn/golden"
 )
 
@@ -27,29 +29,33 @@ func init() {
 func TestSkeletonRun(t *testing.T) {
 	t.Parallel()
 	F := golden.TxtarWith
+	const noflags = ""
 	cases := map[string]struct {
+		dir     string
 		dirinit string
-		args    string
+		flags   string
+		path    string
 		input   string
 
 		wantExitCode int
 		wantOutput   string
 		wantGoTest   bool
 	}{
-		"nooption":              {"", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"overwrite-cancel":      {F(t, "example/go.mod", "// empty"), "example.com/example", "1\n", skeleton.ExitSuccess, "", false},
-		"overwrite-force":       {F(t, "example/go.mod", "// empty"), "example.com/example", "2\n", skeleton.ExitSuccess, "", true},
-		"overwrite-confirm-yes": {F(t, "example/go.mod", "// empty"), "example.com/example", "3\ny\n", skeleton.ExitSuccess, "", true},
-		"overwrite-confirm-no":  {F(t, "example/go.mod", "// empty"), "example.com/example", "3\nn\n", skeleton.ExitSuccess, "", false},
-		"overwrite-newonly":     {F(t, "example/go.mod", "// empty"), "example.com/example", "4\n", skeleton.ExitSuccess, "", false},
-		"plugin":                {"", "-plugin example.com/example", "", skeleton.ExitSuccess, "", true},
-		"nocmd":                 {"", "-cmd=false example.com/example", "", skeleton.ExitSuccess, "", true},
-		"onlypkgname":           {"", "example", "", skeleton.ExitSuccess, "", true},
-		"version":               {"", "-v", "", skeleton.ExitSuccess, "skeleton version\n", false},
-		"kind-inspect":          {"", "-kind inspect example.com/example", "", skeleton.ExitSuccess, "", true},
-		"kind-ssa":              {"", "-kind ssa example.com/example", "", skeleton.ExitSuccess, "", true},
-		"kind-codegen":          {"", "-kind codegen example.com/example", "", skeleton.ExitSuccess, "", true},
-		"kind-packages":         {"", "-kind packages example.com/example", "", skeleton.ExitSuccess, "", true},
+		"nooption":              {"", "", "", "example.com/example", noflags, skeleton.ExitSuccess, "", true},
+		"overwrite-cancel":      {"", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "1\n", skeleton.ExitSuccess, "", false},
+		"overwrite-force":       {"", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "2\n", skeleton.ExitSuccess, "", true},
+		"overwrite-confirm-yes": {"", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "3\ny\n", skeleton.ExitSuccess, "", true},
+		"overwrite-confirm-no":  {"", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "3\nn\n", skeleton.ExitSuccess, "", false},
+		"overwrite-newonly":     {"", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "4\n", skeleton.ExitSuccess, "", false},
+		"plugin":                {"", "", "-plugin", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"nocmd":                 {"", "", "-cmd=false", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"onlypkgname":           {"", "", noflags, "example", "", skeleton.ExitSuccess, "", true},
+		"version":               {"", "", "-v", "", "", skeleton.ExitSuccess, "skeleton version\n", false},
+		"kind-inspect":          {"", "", "-kind inspect", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-ssa":              {"", "", "-kind ssa", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-codegen":          {"", "", "-kind codegen", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-packages":         {"", "", "-kind packages", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"parent-module":         {"", F(t, "go.mod", "module example.com/example"), "-gomod=false", "sub", "", skeleton.ExitSuccess, "", true},
 	}
 
 	if flagUpdate {
@@ -61,20 +67,26 @@ func TestSkeletonRun(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			dir := t.TempDir()
+			tmpdir := t.TempDir()
 			if tt.dirinit != "" {
-				golden.DirInit(t, dir, tt.dirinit)
+				golden.DirInit(t, tmpdir, tt.dirinit)
 			}
 
 			var out, errout bytes.Buffer
 			s := &skeleton.Skeleton{
-				Dir:       dir,
+				Dir:       filepath.Join(tmpdir, tt.dir),
 				Output:    &out,
 				ErrOutput: &errout,
 				Input:     strings.NewReader(tt.input),
 			}
 
-			args := strings.Split(tt.args, " ")
+			var args []string
+			if tt.flags != "" {
+				args = strings.Split(tt.flags, " ")
+			}
+			if tt.path != "" {
+				args = append(args, tt.path)
+			}
 			gotExitCode := s.Run(name, args)
 
 			if gotExitCode != tt.wantExitCode {
@@ -91,17 +103,11 @@ func TestSkeletonRun(t *testing.T) {
 
 			got := golden.Txtar(t, s.Dir)
 
-			if tt.wantGoTest {
-				entries, err := os.ReadDir(dir)
-				if err != nil {
-					t.Fatal("unexpected error:", err)
-				}
-
-				if len(entries) > 0 {
-					skeletondir := filepath.Join(dir, entries[0].Name())
-					gomodtidy(t, skeletondir)
-					gotest(t, name, skeletondir)
-				}
+			if tt.wantGoTest && tt.path != "" {
+				skeletondir := filepath.Join(s.Dir, path.Base(tt.path))
+				modroot := modroot(t, skeletondir)
+				gomodtidy(t, modroot)
+				gotest(t, name, skeletondir)
 			}
 
 			if flagUpdate {
@@ -114,6 +120,16 @@ func TestSkeletonRun(t *testing.T) {
 			}
 		})
 	}
+}
+
+func modroot(t *testing.T, dir string) string {
+	t.Helper()
+	modfile, err := gomod.ModFile(dir)
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	return filepath.Dir(modfile)
 }
 
 func gomodtidy(t *testing.T, dir string) {

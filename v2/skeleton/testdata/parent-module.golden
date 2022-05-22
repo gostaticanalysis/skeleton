@@ -1,0 +1,81 @@
+-- go.mod --
+module example.com/example
+-- sub/cmd/sub/main.go --
+package main
+
+import (
+	"example.com/example/sub"
+	"golang.org/x/tools/go/analysis/unitchecker"
+)
+
+func main() { unitchecker.Main(sub.Analyzer) }
+-- sub/sub.go --
+package sub
+
+import (
+	"go/ast"
+
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
+)
+
+const doc = "sub is ..."
+
+// Analyzer is ...
+var Analyzer = &analysis.Analyzer{
+	Name: "sub",
+	Doc:  doc,
+	Run:  run,
+	Requires: []*analysis.Analyzer{
+		inspect.Analyzer,
+	},
+}
+
+func run(pass *analysis.Pass) (interface{}, error) {
+	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	nodeFilter := []ast.Node{
+		(*ast.Ident)(nil),
+	}
+
+	inspect.Preorder(nodeFilter, func(n ast.Node) {
+		switch n := n.(type) {
+		case *ast.Ident:
+			if n.Name == "gopher" {
+				pass.Reportf(n.Pos(), "identifier is gopher")
+			}
+		}
+	})
+
+	return nil, nil
+}
+-- sub/sub_test.go --
+package sub_test
+
+import (
+	"testing"
+
+	"example.com/example/sub"
+	"github.com/gostaticanalysis/testutil"
+	"golang.org/x/tools/go/analysis/analysistest"
+)
+
+// TestAnalyzer is a test for Analyzer.
+func TestAnalyzer(t *testing.T) {
+	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
+	analysistest.Run(t, testdata, sub.Analyzer, "a")
+}
+-- sub/testdata/src/a/a.go --
+package a
+
+func f() {
+	// The pattern can be written in regular expression.
+	var gopher int // want "pattern"
+	print(gopher)  // want "identifier is gopher"
+}
+-- sub/testdata/src/a/go.mod --
+module a
+
+go 1.18
+

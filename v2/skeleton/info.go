@@ -7,4 +7,5 @@ type Info struct {
 	Path    string
 	Cmd     bool
 	Plugin  bool
+	GoMod   bool
 }
