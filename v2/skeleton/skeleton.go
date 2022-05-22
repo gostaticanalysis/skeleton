@@ -138,7 +138,7 @@ func (s *Skeleton) run(info *Info) error {
 			switch {
 			case !info.Plugin && path.Base(p) == "plugin":
 				return true
-			case !info.GoMod && path.Base(p) == "go.mod":
+			case !info.GoMod && isGoMod(p):
 				return true
 			}
 			return false // no skip
@@ -171,4 +171,9 @@ func ParentModule(dir string) (string, error) {
 	}
 
 	return gomod.Module.Mod.Path, nil
+}
+
+func isGoMod(p string) bool {
+	return path.Base(p) == "go.mod" &&
+		!strings.Contains(p, "testdata/")
 }

@@ -74,3 +74,8 @@ func f() {
 	var gopher int // want "pattern"
 	print(gopher)  // want "identifier is gopher"
 }
+-- sub/testdata/src/a/go.mod --
+module a
+
+go 1.18
+

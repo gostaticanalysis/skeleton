@@ -107,7 +107,7 @@ func TestSkeletonRun(t *testing.T) {
 				skeletondir := filepath.Join(s.Dir, path.Base(tt.path))
 				modroot := modroot(t, skeletondir)
 				gomodtidy(t, modroot)
-				gotest(t, name, modroot)
+				gotest(t, name, skeletondir)
 			}
 
 			if flagUpdate {

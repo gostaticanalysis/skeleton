@@ -1,1 +1,6 @@
-no Go files in /private/var/folders/gh/r3m72st579d1z1trbmd6xfyc0000gp/T/TestSkeletonRunparent-module3115362274/001
+--- FAIL: TestAnalyzer (0000s)
+    analysistest.go:454: a/a.go:5:6: diagnostic "identifier is gopher" does not match pattern `pattern`
+    analysistest.go:518: a/a.go:5: no diagnostic was reported matching `pattern`
+FAIL
+exit status 1
+FAIL	example.com/example/sub	0000s
