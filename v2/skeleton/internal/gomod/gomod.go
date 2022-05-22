@@ -12,14 +12,19 @@ import (
 
 func ModFile(dir string) (string, error) {
 	var stdout bytes.Buffer
-	cmd := exec.Command("go", "env", "GOMOD")
+	cmd := exec.Command("go", "list", "-m", "-f", "{{.GoMod}}")
 	cmd.Dir = dir
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("can not get the parent module with %s: %w", dir, err)
+		return "", fmt.Errorf("cannot get the parent module with %s: %w", dir, err)
 	}
 
-	return strings.TrimSpace(stdout.String()), nil
+	gomod := strings.TrimSpace(stdout.String())
+	if gomod == "" {
+		return "", fmt.Errorf("cannot find go.mod, %s may not managed with Go Modules", dir)
+	}
+
+	return gomod, nil
 }
 
 func ParentModule(dir string) (string, error) {
