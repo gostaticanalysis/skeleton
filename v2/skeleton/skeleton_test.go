@@ -56,6 +56,7 @@ func TestSkeletonRun(t *testing.T) {
 		"kind-codegen":          {"", "", "-kind codegen", "example.com/example", "", skeleton.ExitSuccess, "", true},
 		"kind-packages":         {"", "", "-kind packages", "example.com/example", "", skeleton.ExitSuccess, "", true},
 		"parent-module":         {"", F(t, "go.mod", "module example.com/example"), "-gomod=false", "sub", "", skeleton.ExitSuccess, "", true},
+		"parent-module-deep":    {"sub", F(t, "go.mod", "module example.com/example", "sub/sub.go", "package sub"), "-gomod=false", "subsub", "", skeleton.ExitSuccess, "", true},
 	}
 
 	if flagUpdate {
