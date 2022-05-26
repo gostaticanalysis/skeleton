@@ -3,6 +3,7 @@ package skeleton
 import (
 	"flag"
 	"fmt"
+	"go/build"
 	"io"
 	"io/fs"
 	"os"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/gostaticanalysis/skeleton/v2/skeleton/internal/gomod"
 	"github.com/gostaticanalysis/skeletonkit"
+	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
 )
 
@@ -25,6 +27,7 @@ type Skeleton struct {
 	Output    io.Writer
 	ErrOutput io.Writer
 	Input     io.Reader
+	GoVersion string
 }
 
 func Main(version string, args []string) int {
@@ -33,6 +36,7 @@ func Main(version string, args []string) int {
 		Output:    os.Stdout,
 		ErrOutput: os.Stderr,
 		Input:     os.Stdin,
+		GoVersion: goVersion(),
 	}
 	return s.Run(version, args)
 }
@@ -49,6 +53,8 @@ func (s *Skeleton) Run(version string, args []string) int {
 		fmt.Fprintln(s.ErrOutput, "Error:", err)
 		return ExitError
 	}
+
+	info.GoVersion = s.GoVersion
 
 	info.Path = flags.Arg(0)
 	if !info.GoMod {
@@ -174,4 +180,15 @@ func (s *Skeleton) withoutGoMod(p string) (string, error) {
 func isGoMod(p string) bool {
 	return path.Base(p) == "go.mod" &&
 		!strings.Contains(p, "testdata/")
+}
+
+func goVersion() string {
+	tags := build.Default.ReleaseTags
+	for i := len(tags) - 1; i >= 0; i-- {
+		version := tags[i]
+		if strings.HasPrefix(version, "go") && modfile.GoVersionRE.MatchString(version[2:]) {
+			return version[2:]
+		}
+	}
+	return ""
 }
