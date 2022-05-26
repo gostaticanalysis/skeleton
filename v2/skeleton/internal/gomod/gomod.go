@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/mod/modfile"
@@ -27,21 +28,21 @@ func ModFile(dir string) (string, error) {
 	return gomod, nil
 }
 
-func ParentModule(dir string) (string, error) {
+func ParentModule(dir string) (moddir, modpath string, _ error) {
 	gomodfile, err := ModFile(dir)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	moddata, err := os.ReadFile(gomodfile)
 	if err != nil {
-		return "", fmt.Errorf("cat not read the go.mod of the parent module: %w", err)
+		return "", "", fmt.Errorf("cat not read the go.mod of the parent module: %w", err)
 	}
 
 	gomod, err := modfile.Parse(gomodfile, moddata, nil)
 	if err != nil {
-		return "", fmt.Errorf("cat parse the go.mod of the parent module: %w", err)
+		return "", "", fmt.Errorf("cat parse the go.mod of the parent module: %w", err)
 	}
 
-	return gomod.Module.Mod.Path, nil
+	return filepath.Dir(gomodfile), gomod.Module.Mod.Path, nil
 }

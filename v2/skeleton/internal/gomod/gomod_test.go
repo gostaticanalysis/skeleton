@@ -28,7 +28,7 @@ func TestParentModule(t *testing.T) {
 				modfile := fmt.Sprintf("-- go.mod --\nmodule %s\ngo 1.18", tt.path)
 				golden.DirInit(t, dir, modfile)
 			}
-			got, err := gomod.ParentModule(dir)
+			_, got, err := gomod.ParentModule(dir)
 
 			switch {
 			case !tt.wantErr && err != nil:
