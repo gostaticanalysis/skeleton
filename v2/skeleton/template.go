@@ -6,6 +6,7 @@ import (
 	"text/template"
 
 	"github.com/gostaticanalysis/skeletonkit"
+	"golang.org/x/mod/semver"
 )
 
 //go:embed _template/*
@@ -24,6 +25,14 @@ func init() {
 	DefaultTemplate = template.Must(skeletonkit.ParseTemplate(tmplFS, "skeleton", "_template/inspect"))
 }
 
-func parseTemplate(kind Kind) (*template.Template, error) {
-	return skeletonkit.ParseTemplate(tmplFS, "skeleton", path.Join("_template", kind.String()))
+func parseTemplate(info *Info) (*template.Template, error) {
+	dir := info.Kind.String()
+	if dir != "packages" && go118(info.GoVersion) {
+		dir += "_go118"
+	}
+	return skeletonkit.ParseTemplate(tmplFS, "skeleton", path.Join("_template", dir))
+}
+
+func go118(v string) bool {
+	return v != "" && semver.Compare("v"+v, "v1.18") >= 0
 }
