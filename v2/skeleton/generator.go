@@ -23,5 +23,5 @@ func (g *Generator) template(info *Info) (*template.Template, error) {
 	if g.Template != nil {
 		return g.Template, nil
 	}
-	return parseTemplate(info.Kind)
+	return parseTemplate(info)
 }

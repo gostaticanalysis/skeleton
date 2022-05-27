@@ -1,13 +1,12 @@
 package skeleton
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
+	"go/build"
 	"io"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -28,6 +27,7 @@ type Skeleton struct {
 	Output    io.Writer
 	ErrOutput io.Writer
 	Input     io.Reader
+	GoVersion string
 }
 
 func Main(version string, args []string) int {
@@ -36,6 +36,7 @@ func Main(version string, args []string) int {
 		Output:    os.Stdout,
 		ErrOutput: os.Stderr,
 		Input:     os.Stdin,
+		GoVersion: goVersion(),
 	}
 	return s.Run(version, args)
 }
@@ -53,14 +54,16 @@ func (s *Skeleton) Run(version string, args []string) int {
 		return ExitError
 	}
 
+	info.GoVersion = s.GoVersion
+
 	info.Path = flags.Arg(0)
 	if !info.GoMod {
-		parentModule, err := gomod.ParentModule(s.Dir)
+		importpath, err := s.withoutGoMod(info.Path)
 		if err != nil {
 			fmt.Fprintln(s.ErrOutput, "Error:", err)
 			return ExitError
 		}
-		info.Path = path.Join(parentModule, info.Path)
+		info.Path = importpath
 	} else if prefix := os.Getenv("SKELETON_PREFIX"); prefix != "" {
 		info.Path = path.Join(prefix, info.Path)
 	}
@@ -150,30 +153,42 @@ func (s *Skeleton) run(info *Info) error {
 	return nil
 }
 
-func ParentModule(dir string) (string, error) {
-	var stdout bytes.Buffer
-	cmd := exec.Command("go", "env", "GOMOD")
-	cmd.Dir = dir
-	cmd.Stdout = &stdout
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("can not get the parent module: %w", err)
-	}
-
-	gomodfile := strings.TrimSpace(stdout.String())
-	moddata, err := os.ReadFile(gomodfile)
+func (s *Skeleton) withoutGoMod(p string) (string, error) {
+	moddir, modpath, err := gomod.ParentModule(s.Dir)
 	if err != nil {
-		return "", fmt.Errorf("cat not read the go.mod of the parent module: %w", err)
+		return "", err
 	}
 
-	gomod, err := modfile.Parse(gomodfile, moddata, nil)
+	wd, err := filepath.EvalSymlinks(s.Dir)
 	if err != nil {
-		return "", fmt.Errorf("cat parse the go.mod of the parent module: %w", err)
+		return "", err
 	}
 
-	return gomod.Module.Mod.Path, nil
+	moddir, err = filepath.EvalSymlinks(moddir)
+	if err != nil {
+		return "", err
+	}
+
+	rel, err := filepath.Rel(moddir, wd)
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(modpath, filepath.ToSlash(rel), p), nil
 }
 
 func isGoMod(p string) bool {
 	return path.Base(p) == "go.mod" &&
 		!strings.Contains(p, "testdata/")
+}
+
+func goVersion() string {
+	tags := build.Default.ReleaseTags
+	for i := len(tags) - 1; i >= 0; i-- {
+		version := tags[i]
+		if strings.HasPrefix(version, "go") && modfile.GoVersionRE.MatchString(version[2:]) {
+			return version[2:]
+		}
+	}
+	return ""
 }

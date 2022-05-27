@@ -31,31 +31,37 @@ func TestSkeletonRun(t *testing.T) {
 	F := golden.TxtarWith
 	const noflags = ""
 	cases := map[string]struct {
-		dir     string
-		dirinit string
-		flags   string
-		path    string
-		input   string
+		goVersion string
+		dir       string
+		dirinit   string
+		flags     string
+		path      string
+		input     string
 
 		wantExitCode int
 		wantOutput   string
 		wantGoTest   bool
 	}{
-		"nooption":              {"", "", "", "example.com/example", noflags, skeleton.ExitSuccess, "", true},
-		"overwrite-cancel":      {"", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "1\n", skeleton.ExitSuccess, "", false},
-		"overwrite-force":       {"", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "2\n", skeleton.ExitSuccess, "", true},
-		"overwrite-confirm-yes": {"", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "3\ny\n", skeleton.ExitSuccess, "", true},
-		"overwrite-confirm-no":  {"", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "3\nn\n", skeleton.ExitSuccess, "", false},
-		"overwrite-newonly":     {"", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "4\n", skeleton.ExitSuccess, "", false},
-		"plugin":                {"", "", "-plugin", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"nocmd":                 {"", "", "-cmd=false", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"onlypkgname":           {"", "", noflags, "example", "", skeleton.ExitSuccess, "", true},
-		"version":               {"", "", "-v", "", "", skeleton.ExitSuccess, "skeleton version\n", false},
-		"kind-inspect":          {"", "", "-kind inspect", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"kind-ssa":              {"", "", "-kind ssa", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"kind-codegen":          {"", "", "-kind codegen", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"kind-packages":         {"", "", "-kind packages", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"parent-module":         {"", F(t, "go.mod", "module example.com/example"), "-gomod=false", "sub", "", skeleton.ExitSuccess, "", true},
+		"nooption":              {"", "", "", "", "example.com/example", noflags, skeleton.ExitSuccess, "", true},
+		"overwrite-cancel":      {"", "", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "1\n", skeleton.ExitSuccess, "", false},
+		"overwrite-force":       {"", "", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "2\n", skeleton.ExitSuccess, "", true},
+		"overwrite-confirm-yes": {"", "", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "3\ny\n", skeleton.ExitSuccess, "", true},
+		"overwrite-confirm-no":  {"", "", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "3\nn\n", skeleton.ExitSuccess, "", false},
+		"overwrite-newonly":     {"", "", F(t, "example/go.mod", "// empty"), noflags, "example.com/example", "4\n", skeleton.ExitSuccess, "", false},
+		"plugin":                {"", "", "", "-plugin", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"nocmd":                 {"", "", "", "-cmd=false", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"onlypkgname":           {"", "", "", noflags, "example", "", skeleton.ExitSuccess, "", true},
+		"version":               {"", "", "", "-v", "", "", skeleton.ExitSuccess, "skeleton version\n", false},
+		"kind-inspect":          {"", "", "", "-kind inspect", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-inspect-go118":    {"1.18", "", "", "-kind inspect", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-ssa":              {"", "", "", "-kind ssa", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-ssa-go118":        {"1.18", "", "", "-kind ssa", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-codegen":          {"", "", "", "-kind codegen", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-codegen-go118":    {"1.18", "", "", "-kind codegen", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-packages":         {"", "", "", "-kind packages", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-packages-go118":   {"1.18", "", "", "-kind packages", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"parent-module":         {"", "", F(t, "go.mod", "module example.com/example"), "-gomod=false", "sub", "", skeleton.ExitSuccess, "", true},
+		"parent-module-deep":    {"", "sub", F(t, "go.mod", "module example.com/example", "sub/sub.go", "package sub"), "-gomod=false", "subsub", "", skeleton.ExitSuccess, "", true},
 	}
 
 	if flagUpdate {
@@ -78,6 +84,11 @@ func TestSkeletonRun(t *testing.T) {
 				Output:    &out,
 				ErrOutput: &errout,
 				Input:     strings.NewReader(tt.input),
+				GoVersion: "1.17", // do not change it even if your go version is over 1.18
+			}
+
+			if tt.goVersion != "" {
+				s.GoVersion = tt.goVersion
 			}
 
 			var args []string
