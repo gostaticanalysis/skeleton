@@ -56,11 +56,120 @@ mylinter
             └── go.mod
 ```
 
-`mylinter.go`に静的解析ツールの本体である`*analysis.Analyzer`型の変数が生成されます。`mylinter_test.go`はテストコードですが、基本的には変更する必要はありません。テストは`testdata`ディレクトリ以下に置かれたテスト対象のソースコードを用いて行われます。これは`x/tools/go/analysis`パッケージの仕様に基づいて行われます。詳しくは[ドキュメント](https://pkg.go.dev/golang.org/x/tools/go/analysis)または[プログラミング言語Go完全入門 14章 静的解析とコード生成](http://tenn.in/analysis)をご覧ください。
+#### 解析器
 
-`cmd`ディレクトリ以下には`go vet`から実行される前提の実行可能ファイルを生成するための`main.go`が配置されています。生成した実行可能ファイルファイルは次のように`go vet`経由で実行します。引数は`go vet`と同じでパッケージなどを指定します。
+`x/tools/go/analysis`パッケージを用いて開発された静的解析ツールは、`*analysis.Analyzer`型の値として表現されます。mylinterの場合、`mylinter.go`に`Analyzer`変数として定義されています。
+
+生成されたコードは、`inspect.Analyzer`を用いた簡単な静的解析ツールを実装しています。この静的解析ツールは、`gopher`という名前の識別子を見つけるだけです。
 
 ```go
+package mylinter
+
+import (
+	"go/ast"
+
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
+)
+
+const doc = "mylinter is ..."
+
+// Analyzer is ...
+var Analyzer = &analysis.Analyzer{
+	Name: "mylinter",
+	Doc:  doc,
+	Run:  run,
+	Requires: []*analysis.Analyzer{
+		inspect.Analyzer,
+	},
+}
+
+func run(pass *analysis.Pass) (interface{}, error) {
+	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	nodeFilter := []ast.Node{
+		(*ast.Ident)(nil),
+	}
+
+	inspect.Preorder(nodeFilter, func(n ast.Node) {
+		switch n := n.(type) {
+		case *ast.Ident:
+			if n.Name == "gopher" {
+				pass.Reportf(n.Pos(), "identifier is gopher")
+			}
+		}
+	})
+
+	return nil, nil
+}
+```
+
+#### テストコード
+
+skeletonは、テストコードも生成します。`x/tools/go/analysis`パッケージはサブパッケージの`analysistest`パッケージとして、テストライブラリを提供しています。`analysistest.Run`関数は`testdata/src`ディレクトリ以下にあるソースコードを使ってテストを実行します。この関数の第2引数はテストデータのディレクトリです。第3引数はテスト対象のAnalyzer、第4引数以降はテストデータとして利用するパッケージ名です。
+
+```go
+package mylinter_test
+
+import (
+	"testing"
+
+	"github.com/gostaticanalysis/example.com/mylinter"
+	"github.com/gostaticanalysis/testutil"
+	"golang.org/x/tools/go/analysis/analysistest"
+)
+
+// TestAnalyzer is a test for Analyzer.
+func TestAnalyzer(t *testing.T) {
+	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
+	analysistest.Run(t, testdata, mylinter.Analyzer, "a")
+}
+```
+
+mylinterの場合、テストは`testdata/src/a/a.go`ファイルをテストデータとして利用します。`mylinter.Analyzer`は`gopher`識別子をソースコードの中から探し報告します。テストでは、期待する報告をコメントで記述します。コメントは`want`で始まり、その後に期待するメッセージが正規表現で記述されます。テストは期待するメッセージで報告がされなかったり、期待していない報告がされた場合に失敗します。
+
+```go
+package a
+
+func f() {
+	// The pattern can be written in regular expression.
+	var gopher int // want "pattern"
+	print(gopher)  // want "identifier is gopher"
+}
+```
+
+デフォルトでは`go mod tidy`コマンドと`go test`コマンドを実行すると、テストは失敗します。これは`pattern`というメッセージで作った静的解析ツールが報告をしないためです。
+
+```
+$ go mod tidy
+go: finding module for package golang.org/x/tools/go/analysis
+go: finding module for package github.com/gostaticanalysis/testutil
+go: finding module for package golang.org/x/tools/go/analysis/passes/inspect
+go: finding module for package golang.org/x/tools/go/analysis/unitchecker
+go: finding module for package golang.org/x/tools/go/ast/inspector
+go: finding module for package golang.org/x/tools/go/analysis/analysistest
+go: found golang.org/x/tools/go/analysis in golang.org/x/tools v0.1.10
+go: found golang.org/x/tools/go/analysis/passes/inspect in golang.org/x/tools v0.1.10
+go: found golang.org/x/tools/go/ast/inspector in golang.org/x/tools v0.1.10
+go: found golang.org/x/tools/go/analysis/unitchecker in golang.org/x/tools v0.1.10
+go: found github.com/gostaticanalysis/testutil in github.com/gostaticanalysis/testutil v0.4.0
+go: found golang.org/x/tools/go/analysis/analysistest in golang.org/x/tools v0.1.10
+
+$ go test
+--- FAIL: TestAnalyzer (0.06s)
+    analysistest.go:454: a/a.go:5:6: diagnostic "identifier is gopher" does not match pattern `pattern`
+    analysistest.go:518: a/a.go:5: no diagnostic was reported matching `pattern`
+FAIL
+exit status 1
+FAIL	github.com/gostaticanalysis/example.com/mylinter	1.270s
+```
+
+#### 実行可能ファイル
+
+skeletonは`cmd`ディレクトリ以下に`main.go`も生成します。この`main.go`をビルドし生成した実行可能ファイルは、`go vet`コマンド経由で実行される必要があります。`go vet`コマンドの`-vettool`オプションは生成した実行可能ファイルへの絶対パスを指定します。
+
+```
 $ go vet -vettool=`which mylinter` ./...
 ```
 
