@@ -164,7 +164,17 @@ func (s *Skeleton) withoutGoMod(p string) (string, error) {
 		return "", err
 	}
 
+	wd, err = filepath.Abs(wd)
+	if err != nil {
+		return "", err
+	}
+
 	moddir, err = filepath.EvalSymlinks(moddir)
+	if err != nil {
+		return "", err
+	}
+
+	moddir, err = filepath.Abs(moddir)
 	if err != nil {
 		return "", err
 	}
