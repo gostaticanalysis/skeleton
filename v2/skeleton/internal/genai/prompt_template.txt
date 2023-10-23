@@ -1,0 +1,41 @@
+### Instruction:
+Replace TODO comment to appropriate code and complete the below snippet as a static analysis tool code. You must follow the advices as below. You answer must be as a code only.
+
+### Input:
+Details of the tool:{{range .Details}}
+{{.}}
+{{end}}
+
+Advices:
+You can use go/types packages.
+The object which is corresponded to an identifier, cannot be detected with only its name. You can use type information.
+
+Snippet: 
+package {{.Pkg}}
+
+import (
+	"go/ast"
+
+	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/ast/inspector"
+)
+
+var Analyzer = &analysis.Analyzer{
+	Name: "{{.Pkg}}",
+	Doc:  "", // TODO
+	Run:  run,
+	Requires: []*analysis.Analyzer{
+		inspect.Analyzer,
+	},
+}
+
+func run(pass *analysis.Pass) (any, error) {
+	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+	// TODO
+
+	return nil, nil
+}
+
+### Repsonse:
