@@ -10,14 +10,24 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
-func Generate(ctx context.Context, client *openai.Client, w io.Writer, inst *Instruction) error {
+type Generator struct {
+	Model string
+}
+
+func New() *Generator {
+	return &Generator{
+		Model: openai.GPT4o,
+	}
+}
+
+func (g *Generator) Do(ctx context.Context, client *openai.Client, w io.Writer, inst *Instruction) error {
 	var prompt bytes.Buffer
 	if err := WritePrompt(&prompt, inst); err != nil {
 		return fmt.Errorf("genai.Generate: %w", err)
 	}
 
 	req := openai.ChatCompletionRequest{
-		Model: openai.GPT4,
+		Model: g.Model,
 		Messages: []openai.ChatCompletionMessage{{
 			Role:    openai.ChatMessageRoleUser,
 			Content: prompt.String(),
@@ -38,4 +48,9 @@ func Generate(ctx context.Context, client *openai.Client, w io.Writer, inst *Ins
 	}
 
 	return nil
+
+}
+
+func Generate(ctx context.Context, client *openai.Client, w io.Writer, inst *Instruction) error {
+	return New().Do(ctx, client, w, inst)
 }

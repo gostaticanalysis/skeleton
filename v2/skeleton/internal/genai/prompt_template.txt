@@ -1,5 +1,11 @@
 ### Instruction:
-Replace TODO comment to appropriate code and complete the below snippet as a static analysis tool code. You must follow the advices as below. You answer must be as a code only.
+Replace the TODO comments with appropriate code, and complete the snippet below as static analysis tool code.
+You must follow the instructions below. Your response must be Go code only.
+
+{{with .Tests}}
+Your code must pass the test using the test data below.
+The test use golang.org/x/tools/go/analysis/analysistest package.
+{{end}}
 
 ### Input:
 Details of the tool:{{range .Details}}
@@ -7,8 +13,25 @@ Details of the tool:{{range .Details}}
 {{end}}
 
 Advices:
-You can use go/types packages.
-The object which is corresponded to an identifier, cannot be detected with only its name. You can use type information.
+
+There are several levels of static analysis in Go.
+Parsing and inspecting abstract syntax trees is the simplest.
+The ASTs are passed through analysis.Pass in Analyzer.Run.
+
+However, a node of an AST has no type information.
+The object corresponding to an identifier cannot be obtained from a node of the AST.
+This information can be obtained through the TypesInfo field and the Pkg field of Analyzer.Pass.
+
+If you want to check the code flow, you can use the Static Single Assign (SSA) form.
+Because the variable value can change through multiple flow paths, it is difficult to get the value of the variable without a control flow graph.
+You can use the Static Single Assign (SSA) form with golang.org/x/tools/go/analysis/passes/buildssa.
+
+You should choose the best static analysis method to reduce false positives and false negatives.
+
+{{with .Tests}}
+Test (text archive format):
+{{.}}
+{{end}}
 
 Snippet: 
 package {{.Pkg}}
@@ -17,8 +40,7 @@ import (
 	"go/ast"
 
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
+	// TODO
 )
 
 var Analyzer = &analysis.Analyzer{
@@ -26,12 +48,11 @@ var Analyzer = &analysis.Analyzer{
 	Doc:  "", // TODO
 	Run:  run,
 	Requires: []*analysis.Analyzer{
-		inspect.Analyzer,
+		// TODO
 	},
 }
 
 func run(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	// TODO
 

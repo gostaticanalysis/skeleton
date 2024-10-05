@@ -20,11 +20,22 @@ func TestGenerate(t *testing.T) {
 		Details: []string{
 			"The tool can find function callings of log.Fatal.",
 		},
+		Tests: `package a
+
+import "log"
+
+func f() {
+	log.Fatal("error") // want "NG"
+	fatal := log.Fatal
+	fatal("error") // want "NG"
+	println() // OK
+}
+`,
 	}
 
 	if err := genai.Generate(ctx, client, &buf, inst); err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 
-	t.Log(buf.String())
+	//t.Log(buf.String())
 }

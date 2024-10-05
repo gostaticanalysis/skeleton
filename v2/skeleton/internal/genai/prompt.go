@@ -16,6 +16,7 @@ var (
 type Instruction struct {
 	Pkg     string
 	Details []string
+	Tests   string
 }
 
 func WritePrompt(w io.Writer, inst *Instruction) error {
