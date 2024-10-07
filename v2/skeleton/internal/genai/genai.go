@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -43,8 +44,9 @@ func (g *Generator) Do(ctx context.Context, client *openai.Client, w io.Writer, 
 		return errors.New("genai.Generate: cannot genearte code")
 	}
 
-	if _, err := fmt.Fprint(w, resp.Choices[0].Message.Content); err != nil {
-		return fmt.Errorf("genai.Generate: %w", err)
+	src := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(resp.Choices[0].Message.Content, "```go"), "```"))
+	if _, err := fmt.Fprint(w, src); err != nil {
+		return fmt.Errorf("genai.Generator.Do: %w", err)
 	}
 
 	return nil

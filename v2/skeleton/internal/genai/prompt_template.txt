@@ -8,8 +8,10 @@ The test use golang.org/x/tools/go/analysis/analysistest package.
 {{end}}
 
 ### Input:
-Details of the tool:{{range .Details}}
+{{with .Details}}
+Details of the tool:{{range .}}
 {{.}}
+{{end}}
 {{end}}
 
 Advices:

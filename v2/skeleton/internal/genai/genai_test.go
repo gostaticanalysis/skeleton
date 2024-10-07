@@ -3,6 +3,7 @@ package genai_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -17,13 +18,12 @@ func TestGenerate(t *testing.T) {
 
 	inst := &genai.Instruction{
 		Pkg: "logfatal",
-		Details: []string{
-			"The tool can find function callings of log.Fatal.",
-		},
+		//Details: []string{},
 		Tests: `package a
 
 import "log"
 
+// The tool can find function callings of log.Fatal.
 func f() {
 	log.Fatal("error") // want "NG"
 	fatal := log.Fatal
@@ -37,5 +37,5 @@ func f() {
 		t.Fatal("unexpected error:", err)
 	}
 
-	//t.Log(buf.String())
+	fmt.Print(buf.String())
 }
