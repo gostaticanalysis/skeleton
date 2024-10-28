@@ -1,6 +1,6 @@
 module github.com/gostaticanalysis/skeleton/v2
 
-go 1.16
+go 1.23.2
 
 require (
 	github.com/gostaticanalysis/skeletonkit v0.4.0
