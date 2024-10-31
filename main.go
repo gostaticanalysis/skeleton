@@ -28,6 +28,7 @@ func main() {
 	flag.StringVar(&s.Type, "type", "inspect", "type of skeleton code (inspect|ssa|codegen)")
 	flag.BoolVar(&s.Mod, "mod", true, "generate empty go.mod")
 	flag.StringVar(&s.ImportPath, "path", "", "import path")
+	flag.StringVar(&s.GoVersion, "go-version", "", "the Go version to use in the generated code")
 	flag.Parse()
 	s.ExeName = os.Args[0]
 	s.Args = flag.Args()
@@ -64,6 +65,7 @@ type Skeleton struct {
 	Mode       Mode
 	Type       string
 	Mod        bool
+	GoVersion  string
 }
 
 type Mode int
@@ -87,9 +89,11 @@ type TemplateData struct {
 
 func (s *Skeleton) Run() error {
 
-	// go1.xx.yy -> 1.xx
-	// go1.xx    -> 1.xx
-	gover := strings.Join(strings.Split(runtime.Version(), ".")[:2], ".")[2:]
+	if s.GoVersion == "" {
+		// go1.xx.yy -> 1.xx
+		// go1.xx    -> 1.xx
+		s.GoVersion = strings.Join(strings.Split(runtime.Version(), ".")[:2], ".")[2:]
+	}
 
 	td := &TemplateData{
 		Cmd:     s.Cmd,
@@ -97,7 +101,7 @@ func (s *Skeleton) Run() error {
 		Checker: s.Checker,
 		Type:    s.Type,
 		Mod:     s.Mod,
-		GoVer:   gover,
+		GoVer:   s.GoVersion,
 	}
 
 	if len(s.Args) < 1 {
