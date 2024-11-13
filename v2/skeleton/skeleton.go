@@ -1,20 +1,21 @@
 package skeleton
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
-	"go/build"
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/gostaticanalysis/skeleton/v2/skeleton/internal/gomod"
 	"github.com/gostaticanalysis/skeletonkit"
-	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
+
+	"github.com/gostaticanalysis/skeleton/v2/skeleton/internal/gomod"
 )
 
 const (
@@ -36,8 +37,16 @@ func Main(version string, args []string) int {
 		Output:    os.Stdout,
 		ErrOutput: os.Stderr,
 		Input:     os.Stdin,
-		GoVersion: goVersion(),
 	}
+
+	gover, err := goVersion(s.Dir)
+	if err != nil {
+		fmt.Fprintln(s.ErrOutput, "Error:", err)
+		return ExitError
+	}
+
+	s.GoVersion = gover
+
 	return s.Run(version, args)
 }
 
@@ -192,13 +201,15 @@ func isGoMod(p string) bool {
 		!strings.Contains(p, "testdata/")
 }
 
-func goVersion() string {
-	tags := build.Default.ReleaseTags
-	for i := len(tags) - 1; i >= 0; i-- {
-		version := tags[i]
-		if strings.HasPrefix(version, "go") && modfile.GoVersionRE.MatchString(version[2:]) {
-			return version[2:]
-		}
+func goVersion(dir string) (string, error) {
+	var stdout bytes.Buffer
+	cmd := exec.Command("go", "env", "GOVERSION")
+	cmd.Dir = dir
+	cmd.Stdout = &stdout
+
+	if err := cmd.Run(); err != nil {
+		return "", err
 	}
-	return ""
+
+	return strings.TrimSpace(stdout.String()), nil
 }
