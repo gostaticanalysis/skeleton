@@ -228,7 +228,7 @@ func pkgname(pkg *packages.Package) string {
 -- example/go.mod --
 module example.com/example
 
-go 1.18
+go 1.23
 
 -- example/internal/analyzer.go --
 package internal
@@ -358,5 +358,5 @@ func f() {
 -- example/testdata/src/a/go.mod --
 module a
 
-go 1.18
+go 1.23
 

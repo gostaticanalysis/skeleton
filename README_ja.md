@@ -252,9 +252,9 @@ export SKELETON_PREFIX=github.com/gostaticanalysis
 
 デフォルトでは`main.go`では`go vet`から実行することを前提とした`unitchecker`パッケージが使われています。`-checker`オプションを指定することで、`singlechecker`パッケージや`multichecker`パッケージに変更できます。
 
-`singlechecker`パッケージは、単一のAnalyzerを実行するためのパッケージで`go vet`は必要としません。利用するには`-change=single`を指定します。
+`singlechecker`パッケージは、単一のAnalyzerを実行するためのパッケージで`go vet`は必要としません。利用するには`-checker=single`を指定します。
 
-`multichecker`パッケージは、複数のAnalyzerを実行するためのパッケージで`go vet`は必要としません。利用するには`-change=multi`を指定します。
+`multichecker`パッケージは、複数のAnalyzerを実行するためのパッケージで`go vet`は必要としません。利用するには`-checker=multi`を指定します。
 
 次に`singlechecker`パッケージを利用した例を示します。
 

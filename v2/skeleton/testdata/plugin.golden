@@ -67,7 +67,7 @@ func TestAnalyzer(t *testing.T) {
 -- example/go.mod --
 module example.com/example
 
-go 1.18
+go 1.23
 
 -- example/plugin/main.go --
 // This file can build as a plugin for golangci-lint by below command.
@@ -85,7 +85,8 @@ import (
 
 // flags for Analyzer.Flag.
 // If you would like to specify flags for your plugin, you can put them via 'ldflags' as below.
-//     $ go build -buildmode=plugin -ldflags "-X 'main.flags=-opt val'" example.com/example/plugin/example
+//
+//	$ go build -buildmode=plugin -ldflags "-X 'main.flags=-opt val'" example.com/example/plugin/example
 var flags string
 
 // AnalyzerPlugin provides analyzers as a plugin.
@@ -116,5 +117,5 @@ func f() {
 -- example/testdata/src/a/go.mod --
 module a
 
-go 1.18
+go 1.23
 
