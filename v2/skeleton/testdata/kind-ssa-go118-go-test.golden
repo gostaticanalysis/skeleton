@@ -5,8 +5,8 @@ a.f
 			*ssa.Const	0:int
 		*ssa.Return	return
 --- FAIL: TestAnalyzer (0000s)
-    analysistest.go:518: a/a.go:5: no diagnostic was reported matching `pattern`
-    analysistest.go:518: a/a.go:6: no diagnostic was reported matching `identifier is gopher`
+    analysistest.go:614: a/a.go:5: no diagnostic was reported matching `pattern`
+    analysistest.go:614: a/a.go:6: no diagnostic was reported matching `identifier is gopher`
 FAIL
 exit status 1
 FAIL	example.com/example	0000s
