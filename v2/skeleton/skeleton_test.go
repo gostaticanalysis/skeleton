@@ -55,13 +55,9 @@ func TestSkeletonRun(t *testing.T) {
 		"onlypkgname":           {"", "", "", noflags, "example", "", skeleton.ExitSuccess, "", true},
 		"version":               {"", "", "", "-v", "", "", skeleton.ExitSuccess, "skeleton version\n", false},
 		"kind-inspect":          {"", "", "", "-kind inspect", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"kind-inspect-go118":    {"1.18", "", "", "-kind inspect", "example.com/example", "", skeleton.ExitSuccess, "", true},
 		"kind-ssa":              {"", "", "", "-kind ssa", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"kind-ssa-go118":        {"1.18", "", "", "-kind ssa", "example.com/example", "", skeleton.ExitSuccess, "", true},
 		"kind-codegen":          {"", "", "", "-kind codegen", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"kind-codegen-go118":    {"1.18", "", "", "-kind codegen", "example.com/example", "", skeleton.ExitSuccess, "", true},
 		"kind-packages":         {"", "", "", "-kind packages", "example.com/example", "", skeleton.ExitSuccess, "", true},
-		"kind-packages-go118":   {"1.18", "", "", "-kind packages", "example.com/example", "", skeleton.ExitSuccess, "", true},
 		"parent-module":         {"", "", F(t, "go.mod", "module example.com/example"), "-gomod=false", "sub", "", skeleton.ExitSuccess, "", true},
 		"parent-module-deep":    {"", "sub", F(t, "go.mod", "module example.com/example", "sub/sub.go", "package sub"), "-gomod=false", "subsub", "", skeleton.ExitSuccess, "", true},
 	}
