@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.2.4](https://github.com/gostaticanalysis/skeleton/compare/v2.2.3...v2.2.4) - 2024-11-15
+- Fix compare version by @tenntenn in https://github.com/gostaticanalysis/skeleton/pull/80
+- support development Go version by @sivchari in https://github.com/gostaticanalysis/skeleton/pull/79
+- Remove pre-go1.18 support by @tenntenn in https://github.com/gostaticanalysis/skeleton/pull/82
+
 ## [v2.2.3](https://github.com/gostaticanalysis/skeleton/compare/v2.2.2...v2.2.3) - 2024-11-13
 - fix -checker option description in README_ja.md by @ikura-hamu in https://github.com/gostaticanalysis/skeleton/pull/68
 - Fix test and vet workflow by @tenntenn in https://github.com/gostaticanalysis/skeleton/pull/69
