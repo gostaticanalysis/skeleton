@@ -45,6 +45,12 @@ func Main(version string, args []string) int {
 		return ExitError
 	}
 
+	if strings.HasPrefix(gover, "devel ") {
+		// The devel format is like following.
+		// devel go1.24-xxxxxxxxxx Day Date Mon Time Arch"
+		gover = strings.Split(strings.TrimPrefix(gover, "devel "), "-")[0]
+	}
+
 	s.GoVersion = gover
 
 	return s.Run(version, args)
