@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"flag"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -12,9 +13,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tenntenn/golden"
+
 	"github.com/gostaticanalysis/skeleton/v2/skeleton"
 	"github.com/gostaticanalysis/skeleton/v2/skeleton/internal/gomod"
-	"github.com/tenntenn/golden"
 )
 
 var (
@@ -117,7 +119,7 @@ func TestSkeletonRun(t *testing.T) {
 			if tt.wantGoTest && tt.path != "" {
 				skeletondir := filepath.Join(s.Dir, path.Base(tt.path))
 				modroot := modroot(t, skeletondir)
-				gomodtidy(t, modroot)
+				execCmd(t, modroot, "go", "mod", "tidy")
 				gotest(t, name, skeletondir)
 			}
 
@@ -143,30 +145,18 @@ func modroot(t *testing.T, dir string) string {
 	return filepath.Dir(modfile)
 }
 
-func gomodtidy(t *testing.T, dir string) {
-	t.Helper()
-	cmd := exec.Command("go", "mod", "tidy")
-	cmd.Dir = dir
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		t.Fatalf("go mod tidy: unexpected error: %s with:\n%s", err, &stderr)
-	}
-}
-
 var (
 	timeRegexp = regexp.MustCompile(`([\(\t])([0-9.]+s)(\)?)`)
 )
 
 func gotest(t *testing.T, name, dir string) {
 	t.Helper()
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("go", "test")
 	cmd.Dir = dir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	t.Log("exec", cmd)
-
 	if err := cmd.Run(); err != nil && !errors.As(err, new(*exec.ExitError)) {
 		t.Fatal("unexpected error:", err)
 	}
@@ -183,4 +173,18 @@ func gotest(t *testing.T, name, dir string) {
 	if diff := golden.Diff(t, "testdata", goldenname, got); diff != "" {
 		t.Error(diff)
 	}
+}
+
+func execCmd(t *testing.T, dir, cmd string, args ...string) io.Reader {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	_cmd := exec.Command(cmd, args...)
+	_cmd.Stdout = &stdout
+	_cmd.Stderr = &stderr
+	_cmd.Dir = dir
+	t.Log("exec", cmd, strings.Join(args, " "))
+	if err := _cmd.Run(); err != nil {
+		t.Fatal(err, "\n", &stderr)
+	}
+	return &stdout
 }
