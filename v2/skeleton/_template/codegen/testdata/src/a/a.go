@@ -11,6 +11,6 @@ func (db) Get(id string) int    { return 0 }
 func (db) Set(id string, v int) {}
 
 type Logger interface {
-	Infof(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
+	Infof(format string, args ...any)
+	Errorf(format string, args ...any)
 }

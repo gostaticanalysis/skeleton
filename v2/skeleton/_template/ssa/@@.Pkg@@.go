@@ -19,7 +19,7 @@ var Analyzer = &analysis.Analyzer{
 	},
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (any, error) {
 	s := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
 	for _, f := range s.SrcFuncs {
 		fmt.Println(f)

@@ -2,7 +2,6 @@ package skeleton
 
 import (
 	"embed"
-	"go/version"
 	"path"
 	"text/template"
 
@@ -27,12 +26,5 @@ func init() {
 
 func parseTemplate(info *Info) (*template.Template, error) {
 	dir := info.Kind.String()
-	if dir != "packages" && go118(info.GoVersion) {
-		dir += "_go118"
-	}
 	return skeletonkit.ParseTemplate(tmplFS, "skeleton", path.Join("_template", dir))
-}
-
-func go118(v string) bool {
-	return v != "" && version.Compare(v, "1.18") >= 0
 }

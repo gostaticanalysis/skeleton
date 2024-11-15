@@ -20,16 +20,6 @@ skeletonについて詳しく知りたい場合は、次のブログも参考に
 
 ## インストール
 
-Goのバージョンによってインストール方法が異なります。
-
-### Go1.16未満
-
-```
-$ go get -u github.com/gostaticanalysis/skeleton/v2
-```
-
-### Go1.16以上
-
 ```
 $ go install github.com/gostaticanalysis/skeleton/v2@latest
 ```
