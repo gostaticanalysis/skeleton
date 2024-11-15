@@ -2,11 +2,11 @@ package skeleton
 
 import (
 	"embed"
+	"go/version"
 	"path"
 	"text/template"
 
 	"github.com/gostaticanalysis/skeletonkit"
-	"golang.org/x/mod/semver"
 )
 
 //go:embed _template/*
@@ -34,5 +34,5 @@ func parseTemplate(info *Info) (*template.Template, error) {
 }
 
 func go118(v string) bool {
-	return v != "" && semver.Compare("v"+v, "v1.18") >= 0
+	return v != "" && version.Compare(v, "1.18") >= 0
 }
