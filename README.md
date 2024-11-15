@@ -20,16 +20,6 @@ The following slides describes details of Go's static analysis including the `x/
 
 ## Installation
 
-There are two diffrent ways to install skeleton by Go versions.
-
-### Less than Go1.16
-
-```
-$ go get -u github.com/gostaticanalysis/skeleton/v2
-```
-
-### Go1.16 or higher
-
 ```
 $ go install github.com/gostaticanalysis/skeleton/v2@latest
 ```
