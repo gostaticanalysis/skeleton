@@ -1,6 +1,6 @@
 --- FAIL: TestAnalyzer (0000s)
-    analysistest.go:550: a/a.go:5:6: diagnostic "identifier is gopher" does not match pattern `pattern`
-    analysistest.go:614: a/a.go:5: no diagnostic was reported matching `pattern`
+    analysistest.go:550: a/a.go:6: diagnostic "identifier is gopher" does not match pattern `pattern`
+    analysistest.go:614: a/a.go:6: no diagnostic was reported matching `pattern`
 FAIL
 exit status 1
 FAIL	example.com/example	0000s
