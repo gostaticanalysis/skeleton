@@ -60,6 +60,8 @@ func TestSkeletonRun(t *testing.T) {
 		"kind-packages":         {"", "", "", "-kind packages", "example.com/example", "", skeleton.ExitSuccess, "", true},
 		"parent-module":         {"", "", F(t, "go.mod", "module example.com/example"), "-gomod=false", "sub", "", skeleton.ExitSuccess, "", true},
 		"parent-module-deep":    {"", "sub", F(t, "go.mod", "module example.com/example", "sub/sub.go", "package sub"), "-gomod=false", "subsub", "", skeleton.ExitSuccess, "", true},
+		"kind-inspect-copy-parent-gomod-to-testdata": {"", "", "", "-kind inspect -copy-parent-gomod", "example.com/example", "", skeleton.ExitSuccess, "", true},
+		"kind-ssa-copy-parent-gomod-to-testdata":     {"", "", "", "-kind ssa -copy-parent-gomod", "example.com/example", "", skeleton.ExitSuccess, "", true},
 	}
 
 	if flagUpdate {

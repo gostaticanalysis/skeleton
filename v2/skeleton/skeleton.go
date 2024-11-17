@@ -120,6 +120,7 @@ func (s *Skeleton) parseFlag(args []string, info *Info) (*flag.FlagSet, error) {
 	flags.BoolVar(&info.Plugin, "plugin", false, "create golangci-lint plugin")
 	flags.StringVar(&info.Pkg, "pkg", "", "package name")
 	flags.BoolVar(&info.GoMod, "gomod", true, "create a go.mod file")
+	flags.BoolVar(&info.CopyParentGoMod, "copy-parent-gomod", false, "copy parent go.mod file to testdata")
 
 	if err := flags.Parse(args); err != nil {
 		return nil, err
