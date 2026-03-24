@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2.3.1](https://github.com/gostaticanalysis/skeleton/compare/v2.3.0...v2.3.1) - 2026-03-24
+- Upgrade Go version to 1.25.8 by @tenntenn in https://github.com/gostaticanalysis/skeleton/pull/85
+- Upgrade golang.org/x/tools from v0.27.0 to v0.43.0 by @tenntenn in https://github.com/gostaticanalysis/skeleton/pull/87
+
 ## [v2.3.0](https://github.com/gostaticanalysis/skeleton/compare/v2.2.3...v2.3.0) - 2024-11-17
 - Fix compare version by @tenntenn in https://github.com/gostaticanalysis/skeleton/pull/80
 - support development Go version by @sivchari in https://github.com/gostaticanalysis/skeleton/pull/79
