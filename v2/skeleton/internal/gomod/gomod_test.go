@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gostaticanalysis/skeleton/v2/skeleton/internal/gomod"
 	"github.com/tenntenn/golden"
+
+	"github.com/gostaticanalysis/skeleton/v2/skeleton/internal/gomod"
 )
 
 func TestParentModule(t *testing.T) {

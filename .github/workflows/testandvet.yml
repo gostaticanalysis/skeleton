@@ -40,13 +40,14 @@ jobs:
         restore-keys: |
           go-
 
-    - name: Install tennvet
-      run: |
-        GOBIN=$(pwd)/v2 go install github.com/tenntenn/tennvet@latest
+    - name: Install aqua
+      uses: aquaproj/aqua-installer@e2d0136abcf70b7a2f93480c8c7bfe0152caee6b # v4.0.0
+      with:
+        aqua_version: v2.55.1
 
     - name: Test and vet
+      working-directory: v2
       run: |
-        cd v2
-        go vet ./...
-        go vet -vettool=$(pwd)/tennvet ./...
-        go test -v -race ./...
+        task vet
+        task tennvet
+        task test

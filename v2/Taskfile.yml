@@ -1,0 +1,33 @@
+version: '3'
+
+vars:
+  MODULE:
+    sh: go list -m
+  UPDATE: false
+
+tasks:
+  default:
+    cmds:
+      - task: fmt
+      - task: vet
+      - task: test
+
+  fmt:
+    desc: Run goimports
+    cmds:
+      - find . -name '*.go' -not -path './*/_template/*' -print0 | xargs -0 goimports -local {{.MODULE}} -w
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  tennvet:
+    desc: Run tennvet
+    cmds:
+      - go vet -vettool=$(go tool -n tennvet) ./...
+
+  test:
+    desc: Run go test (use task test -- -update to update golden files)
+    cmds:
+      - go test -race ./... {{.CLI_ARGS}}
